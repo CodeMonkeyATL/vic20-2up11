@@ -1,0 +1,59 @@
+# visual studio workspace junk
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+
+# visual studio build logs and temp files
+*.log
+*.tlog
+*.tmp
+*.cache
+*.db
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+# visual studio autosave / backup files
+*.bak
+*.orig
+
+# visual studio profiler / analysis
+*.psess
+*.vsp
+*.vspscc
+*.psess
+*.vsmdi
+
+# visual studio generated settings
+*.DotSettings
+*.DotSettings.user
+
+# windows explorer noise
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS finder noise (in case you edit on mac)
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# linux editor noise
+*~
+.*.swp
+.*.swo
+
+# ignore any accidental binary blobs
+*.bin
+
+# ignore any accidental markdown preview caches
+*.md.cache
+
+# ignore any accidental zip/tar archives
+*.zip
+*.tar
+*.gz
+*.7z

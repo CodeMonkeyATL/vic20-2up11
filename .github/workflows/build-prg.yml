@@ -70,6 +70,6 @@ jobs:
         run: |
           git config user.name "CodeMonkeyATL-github-actions"
           git config user.email "ci@users.noreply.github.com"
-          git add */prg_files/* || true
+          git add */prgs/* || true
           git commit -m "auto-build prg from bas" || echo "no changes to commit"
           git push || echo "nothing to push"

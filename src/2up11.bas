@@ -127,7 +127,6 @@
 37050 iffull=1thenprint"board full! game over":end
 37060 return
 
-37999end
 38000 printchr$(147);"{reverse on}{blu}                      {reverse off}";
 38010 print"{reverse on}{red}2^11{blu} {grn}by codemonkeyatl{blu}{reverse on}";
 38020 print" {reverse on}{blu}                      {reverse off}"

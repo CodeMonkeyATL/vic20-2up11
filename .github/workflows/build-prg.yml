@@ -45,7 +45,7 @@ jobs:
           for f in ${{ steps.basfiles.outputs.files }}; do
             base=$(basename "$f" .bas)
             dir=$(dirname "$f")
-            outdir="$dir/../prg_files"
+            outdir="$dir/../prgs"
 
             mkdir -p "$outdir"
 

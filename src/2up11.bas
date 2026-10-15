@@ -133,3 +133,4 @@
 38030 print"{red}wasd{blu}=move":print"{red}   n{blu}=new game"
 38040 print"{red}   r{blu}=redraw":print"{red}   q{blu}=quit"
 38050 return
+

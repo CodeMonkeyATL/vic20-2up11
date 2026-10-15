@@ -71,7 +71,7 @@ Copy the PRG to a disk image or transfer it using your preferred method (SD2IEC,
 
 Additional technical notes, PETSCII layout sketches, and memory usage details can be found in the `docs` folder. These files are optional and may grow as the project evolves.
 
-## automatic build (work in progress)
+## automatic build
 
 When a pull request containing changes to any `.bas` file is merged, the GitHub Action in `.github/workflows/build-prg.yml` automatically:
 

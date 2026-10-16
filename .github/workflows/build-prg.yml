@@ -48,7 +48,6 @@ jobs:
             outdir="$dir/../prgs"
 
             mkdir -p "$outdir"
-            petcat -v -w2 -l 1001 -o 2up11.prg 2up11.bas
             case "$f" in
               *-vic20.bas)       flags="-w2 --vic20" ;;
               *-vic20-8k.bas)    flags="-w2 --vic20-8k" ;;

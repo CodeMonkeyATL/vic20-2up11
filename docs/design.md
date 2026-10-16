@@ -96,14 +96,14 @@ Each movement routine follows the same pattern:
 Two tiles merge if:
 
 ```
-t(c) = t(prev)
+t(c) = t(mp)
 ```
 
 After merging:
 
 ```
 t(c) = t(c) + 65
-t(prev) = 0
+t(mp) = 0
 dm = 1
 ```
 

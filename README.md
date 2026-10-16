@@ -14,6 +14,38 @@ This repository contains the current version of the BASIC source and an automate
 - deterministic and repeatable logic for testing  
 - builds automatically through GitHub Actions using a repo-stored petcat executable  
 
+## how to play
+2up11 is a tile merging puzzle game inspired by the mechanics of 2048 progression. The goal is to combine matching tiles to reach the highest power of two you can before the board fills up.
+
+Tiles represent powers of two and are displayed using PETSCII characters. The progression follows the VIC 20 screen code sequence: 1 through 9, then 0, then the inverted 1 through 9, then inverted 0.
+
+You move tiles using the directional keys, WASD. 
+When you move in a direction, all tiles slide as far as they can. 
+Matching tiles merge into the next PETSCII character in the progression. 
+After each move, a new tile appears in an empty space.
+
+The game ends when no moves are possible. 
+The board must have at least one empty space or at least one adjacent pair of matching tiles. 
+If neither condition is true, the game is over.
+
+There is no scoring system. 
+Progress is visible directly on the board through the tile progression.
+
+## screenshots
+![gameplay](screenshots/gameplay.png)
+![merge](screenshots/merge.png)
+![gameover](screenshots/gameover.png)
+
+
+## compatibility
+2up11 runs on an unexpanded VIC 20. No RAM expansion is required.
+
+The game works on real hardware, including VIC 20 units with standard keyboards and video output. 
+It also works in VICE using the xvic emulator. 
+It runs should run correctly on the MiSTer VIC 20 core and on SD2IEC, Pi1541, and other modern storage devices that support PRG loading, but it has not been tested.
+
+The game is written entirely in BASIC V2 and fits within the memory constraints of an unexpanded machine.
+
 ## repository layout
 
 ```

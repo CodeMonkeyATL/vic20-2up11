@@ -206,10 +206,10 @@ Game over occurs when:
 gt(i) <> 0 for all i
 ```
 
-If the board is full:
+If the board is full and there are no more possible merges:
 
 ```
-print "board full! game over"
+print "game over"
 ```
 
 Execution ends.

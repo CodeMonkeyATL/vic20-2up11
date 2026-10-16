@@ -22,7 +22,7 @@
 460 ifa$="d"thenmd=3:gosub1000
 470 ifa$="d"anddm=0thenmt=mt or 8
 
-480 gosub32000:ifdm=1thenmt=0:gosub36500:goto300
+480 ifdm=1thenmt=0:gosub32000:gosub36500:goto300
 
 500 goto300
 
@@ -104,6 +104,7 @@
 5000 gosub38000:gosub31000:gosub32000:return
 
 6000 gosub37000:iffull=1andmt=15thenprint:print"{blu}game over":mt=0:return
+6010 return
 
 30000 dimbx$(15)
 30010 data117,96,105,106,96,107,98,125,176,177,174,173,178,189,179,171

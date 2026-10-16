@@ -48,7 +48,7 @@ jobs:
             outdir="$dir/../prgs"
 
             mkdir -p "$outdir"
-
+            petcat -v -w2 -l 1001 -o 2up11.prg 2up11.bas
             case "$f" in
               *-vic20.bas)       flags="-w2 --vic20" ;;
               *-vic20-8k.bas)    flags="-w2 --vic20-8k" ;;
@@ -58,7 +58,7 @@ jobs:
               *-mega65.bas)      flags="-w2 --mega65" ;;
               *-x16.bas)         flags="-w2 --cx16" ;;
               *-plain.bas)       flags="-w2" ;;
-              *)                 flags="-w2" ;;
+              *)                 flags="-w2 -l 1001" ;;
             esac
 
             echo "Building $f → $outdir/${base}"

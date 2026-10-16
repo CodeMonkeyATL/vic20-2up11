@@ -1,26 +1,30 @@
 100 w=3:dimgt(15):dimt(7):r=rnd(-ti):gosub30000
-110 gosub38000:gosub31000:gosub32000:gosub36500
+110 gosub5000:gosub36500
 
-300 a=fre(0):dm=0:geta$
+300 a=fre(0):ifmt>0anddm=0thengosub6000
+310 ifdm=1thenmt=0
+320 dm=0:geta$
 
-310 ifa$="w"thengosub1800:gosub32000
-320 ifa$="w"anddm=1thengosub36500:goto300
+330 ifa$="r"thengosub5000:goto300
+340 ifa$="%"thenfori=0to15:printi;",";gt(i):nexti:goto300
+370 ifa$="n"thenforx=0to15:gt(x)=0:nextx:gosub5000:gosub36500:goto300
+380 ifa$="q"thenprint"{blu}":end
 
-330 ifa$="a"thengosub1400:gosub32000
-340 ifa$="a"anddm=1thengosub36500:goto300
+400 ifa$="w"thenmd=0:gosub1800
+410 ifa$="w"anddm=0thenmt=mt or 1
 
-350 ifa$="s"thengosub2200:gosub32000
-360 ifa$="s"anddm=1thengosub36500:goto300
+420 ifa$="a"thenmd=1:gosub1400
+430 ifa$="a"anddm=0thenmt=mt or 2
 
-370 ifa$="d"thengosub1000:gosub32000
-380 ifa$="d"anddm=1thengosub36500:goto300
+440 ifa$="s"thenmd=2:gosub2200
+450 ifa$="s"anddm=0thenmt=mt or 4
 
-390 ifa$="n"thenforx=0to15:gt(x)=0:nextx:gosub37000:gosub32000:gosub36500:goto300
-400 ifa$="r"thengosub38000:gosub31000:gosub32000:goto300
-410 ifa$="%"thenfori=0to15:printi;",";gt(i):nexti:goto300
-420 ifa$="q"thenprint"{blu}":end
+460 ifa$="d"thenmd=3:gosub1000
+470 ifa$="d"anddm=0thenmt=mt or 8
 
-440 goto300
+480 gosub32000:ifdm=1thenmt=0:gosub36500:goto300
+
+500 goto300
 
 900 ifp=0thendp=32:return
 910 ifp<10thendp=p+48:return
@@ -97,9 +101,13 @@
 2460 ifmoved=1thengoto2380
 2470 forr=0tow:idx=r*(w+1)+c:gt(idx)=t(r):nextr:nextc:return
 
+5000 gosub38000:gosub31000:gosub32000:return
+
+6000 gosub37000:iffull=1andmt=15thenprint:print"{blu}game over":mt=0:return
+
 30000 dimbx$(15)
-30020 data117,96,105,106,96,107,98,125,176,177,174,173,178,189,179,171
-30040 forzt=0to15:readx:bx$(zt)=chr$(x):nextzt:return
+30010 data117,96,105,106,96,107,98,125,176,177,174,173,178,189,179,171
+30020 forzt=0to15:readx:bx$(zt)=chr$(x):nextzt:return
 
 31000 t=(22-w-4)/2:print"{grn}";chr$(17);chr$(4);
 31020 printtab(t);bx$(8);:fori=0tow:printbx$(9);:nexti:printbx$(10)
@@ -123,12 +131,10 @@
 
 37000 full=1:fori=0to15
 37030 ifgt(i)=0thenfull=0
-37040 nexti
-37050 iffull=1thenprint"board full! game over":end
-37060 return
+37040 nexti:return
 
 38000 printchr$(147);"{reverse on}{blu}                      {reverse off}";
-38010 print"{reverse on}{red}2^11{blu} {grn}by codemonkeyatl{blu}{reverse on}";
+38010 print"{reverse on}{red}2^11{blu} by codemonkeyatl{blu}";
 38020 print" {reverse on}{blu}                      {reverse off}"
 38030 print"{red}wasd{blu}=move":print"{red}   n{blu}=new game"
 38040 print"{red}   r{blu}=redraw":print"{red}   q{blu}=quit"

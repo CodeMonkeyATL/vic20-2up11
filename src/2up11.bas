@@ -143,4 +143,3 @@
 
 39000 print"{home}{down}{down}{down}{reverse on}{blu}score:{reverse off}";ss:return
 39100 ss=ss+(2^(sv+1)):sv=0:return
-

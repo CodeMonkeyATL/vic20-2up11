@@ -68,7 +68,7 @@ jobs:
         if: ${{ steps.basfiles.outputs.files != '' }}
         run: |
           git config user.name "CodeMonkeyATL-github-actions"
-          git config user.email "ci@users.noreply.github.com"
+          git config user.email "troy_hildebrand@hotmail.com"
           git add ./prgs/* || true
           git commit -m "auto-build prg from bas" || echo "no changes to commit"
           git push || echo "nothing to push"

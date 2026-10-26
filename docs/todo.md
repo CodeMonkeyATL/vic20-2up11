@@ -4,7 +4,7 @@ Known issues and ideas, found while bringing the repo's tooling in line with vic
 
 ## memory
 
-- **About 2170 bytes free** after quitting, after the double border (it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Room for sound and more.
+- **About 1954 bytes free** after quitting, after the wall colors (it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Room for sound and more.
 - **`x=fre(0)` (line 310):** forces garbage collection once per key (it used to run on every idle pass, as `a=fre(0)`). It was added early on, when screen drawing built a lot of strings. Now almost nothing makes string garbage (only `get a$`), so it can probably go; check that no collection pause shows up in a long game without it.
 
 ## speed
@@ -32,7 +32,16 @@ Sound effects, similar to RingSort's (see its `docs/design.md` sound table and t
 - **2048 reached** (inverted `1`, power 11): RingSort's win chime;
 - **game over:** a slow falling tone (suggestion).
 
-Each sound needs bytes; with about 2170 free there is room now. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
+Each sound needs bytes; with about 1954 free there is room now. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
+
+## naming
+
+- Rename the one-letter direction variables to two-letter names that say what they are, as a family with a shared first letter (`basic-guidelines.md`). Today, set per key in 400-440:
+  - `b`: the cell where line 0 starts, on the wall side (0, 0, 12, 3 for w, a, s, d)
+  - `l`: step from one line's start to the next (1 for up/down, 4 for left/right)
+  - `s`: step from one cell to the next along a line, away from the wall (4, 1, -4, -1)
+  - `m`: the direction's bit for game over (1, 2, 4, 8)
+- One option is a `d` family: `dc` (first cell), `dl` (line step), `ds` (cell step), `db` (bit). `dm` (board changed) already starts with `d`, so it might become `mv`. Check each name against keywords (`to`, `if`, `or`, `on`, `fn`, `go`, `st`, `ti`) before using it. Costs about 1 byte per use; the wall variables `wa`/`ws`/`wc` already follow the pattern.
 
 ## repo
 

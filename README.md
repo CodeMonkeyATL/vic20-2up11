@@ -30,6 +30,8 @@ The board must have at least one empty space or at least one adjacent pair of ma
 If neither condition is true, the game is over. 
 The game shows GAME OVER once the board is full and you've tried all four directions without anything moving.
 
+**Wall colors:** the inner wall on the side you move toward turns blue while the move runs. It turns back to green if the tiles moved, or red if nothing could move. A red wall stays red until a move works, so at game over all four inner walls are red.
+
 | Key | Action |
 |---|---|
 | `w` `a` `s` `d` | move up, left, down, right |

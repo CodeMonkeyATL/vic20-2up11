@@ -11,25 +11,34 @@ This repository contains the current version of the BASIC source and an automate
 - 4x4 grid adapted from 2048-style gameplay  
 - Tiles represent powers of 2 and are displayed using PETSCII characters. The visual progression follows the VIC‑20 screen code sequence (1‑9, 0, inverted 1‑9, 0), giving each power a distinct appearance.  
 - supports directional movement, tile merging, and score tracking  
-- deterministic and repeatable logic for testing  
+- a new random board every run (seeded from the VIC's clock)  
 - builds automatically through GitHub Actions using a repo-stored petcat executable  
 
 ## how to play
 2up11 is a tile merging puzzle game inspired by the mechanics of 2048 progression. The goal is to combine matching tiles to reach the highest power of two you can before the board fills up.
 
-Tiles represent powers of two and are displayed using PETSCII characters. The progression follows the VIC 20 screen code sequence: 1 through 9, then 0, then the inverted 1 through 9, then inverted 0.
+Tiles represent powers of two and are displayed using PETSCII characters. The progression follows the VIC 20 screen code sequence: 1 through 9, then 0, then the inverted 1 through 9, then inverted 0. The character is the last digit of the power: `1` is 2, `2` is 4, `0` is 1024, and an inverted `1` is 2048.
 
-You move tiles using the directional keys, WASD. 
+You move tiles with `w` (up), `a` (left), `s` (down) and `d` (right). 
 When you move in a direction, all tiles slide as far as they can. 
 Matching tiles merge into the next PETSCII character in the progression. 
-After each move, a new tile appears in an empty space.
+Tiles that just merged are drawn in blue. 
+After each move, a new tile appears in an empty space, drawn in red: a 2 (90% of the time) or a 4.
 
 The game ends when no moves are possible. 
 The board must have at least one empty space or at least one adjacent pair of matching tiles. 
-If neither condition is true, the game is over.
+If neither condition is true, the game is over. 
+The game shows GAME OVER once the board is full and you've tried all four directions without anything moving.
 
-There is no scoring system. 
-Progress is visible directly on the board through the tile progression.
+| Key | Action |
+|---|---|
+| `w` `a` `s` `d` | move up, left, down, right |
+| `n` | new game |
+| `r` | redraw the screen |
+| `q` | quit |
+
+**Score:** each merge adds the value of the new tile (two 4s make an 8 and score 8), as in 2048. The score shows near the top of the screen. 
+Progress is also visible directly on the board through the tile progression.
 
 ## screenshots
 ![gameplay](screenshots/gameplay.png)

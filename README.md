@@ -12,6 +12,8 @@ This repository contains the current version of the BASIC source and an automate
 - Tiles represent powers of 2 and are displayed using PETSCII characters. The visual progression follows the VIC‑20 screen code sequence (1‑9, 0, inverted 1‑9, 0), giving each power a distinct appearance.  
 - supports directional movement, tile merging, and score tracking  
 - a new random board every run (seeded from the VIC's clock)  
+- a double border whose inner wall lights up to show each move's result, and a queue of the keys you've typed ahead  
+- sound effects: a quiet slide, a coin ding for every merge (higher for bigger tiles, so you can hear how many merged), a chime for 2048 and up, a woosh when nothing can move, and a game over tone  
 - builds automatically through GitHub Actions using a repo-stored petcat executable  
 
 ## how to play

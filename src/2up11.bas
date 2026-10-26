@@ -1,4 +1,7 @@
-100 dimgt%(15),t%(4),mz%(7):r=rnd(-ti):poke36878,15
+100 i=0:p=0:j=0:x=0:y=0:lv=0:lm=0:ds=0:sc=0:co=30720
+105 dimt%(4),gt%(15),mz%(7),sa%(15),cd%(20):r=rnd(-ti):poke36878,15
+110 fori=0to15:sa%(i)=7931+i+18*int(i/4):next
+120 fori=0to20:cd%(i)=48+i-10*int(i/10)-128*(i>10)+16*(i=0):next
 200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:gosub5000:gosub36500
 
 300 geta$:ifa$=""then300
@@ -11,12 +14,12 @@
 420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38739:ws=1:goto450
 430 ifa$<>"d"then300
 440 dc=3:dl=4:ds=-1:db=8:wa=38655:ws=22
-450 wc=6:gosub950:gosub965:gosub1000:ifmv=0then465
-460 mt=0:gosub960:gosub965:gosub620:gosub32000:gosub36500:gosub39000:gosub970:goto300
+450 wc=6:gosub950:gosub965:gosub1100:gosub1000:ifmv=0then465
+455 wc=5:gosub950:ifmtthenmt=0:gosub960
+460 gosub965:gosub620:gosub36500:gosub39000:gosub970:goto300
 465 wc=2:gosub950:gosub970:mt=dbormt:gosub660
 470 ifmt=15thenprint"{home}{down}{down}{down}{down}{left}{left}{left}{left}{left}{left}{left}{left}{left}{reverse on}{red}game over":mt=0:gosub670
 480 goto300
-
 600 fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return
 610 v=36876:fori=1to4:pokev,195+i*12:forj=1to99:next:next:pokev,0:return
 620 ifmnthen640
@@ -27,30 +30,34 @@
 660 poke36877,250:v=36878:f=15:e=0:s=-1:gosub600:poke36877,0:return
 670 v=36874:f=200:e=140:s=-.5:goto600
 
-900 sp=7931+x+18*int(x/4):pokesp+30720,sc
-910 pokesp,48+p-10*int(p/10)-128*(p>10)+16*(p=0):return
+900 y=sa%(x):pokey,cd%(p):pokey+co,sc:return
 
 950 fori=0to3:pokewa+i*ws,wc:next:return
 960 fori=0to3:pokei+38629,5:pokei+38739,5:poke22*i+38650,5:poke22*i+38655,5:next:return
-965 poke8083,asc(a$)and63:poke38803,5:o=1
-970 fori=oto9:c=32:ifi-o<peek(198)thenc=peek(631+i-o)and63
-980 poke8083+i,c:poke38803+i,6:next:o=0:return
+965 poke8083,asc(a$)and63:poke38803,5:o=1:goto975
+970 poke38803,6
+975 q=peek(198)+o:qe=q:ifql>qethenqe=ql
+980 ql=q:fori=otoqe-1:c=32:ifi<qthenc=peek(631+i-o)and63
+985 poke8083+i,c:next:o=0:return
 
-1000 mv=0:mn=0:forr=0to3:c=dc+r*dl:fori=0to3:t%(i)=gt%(c+i*ds):next:mp=4
-1010 fori=0to3:ift%(i)=0then1040
-1020 ift%(i)<>t%(mp)thenmp=i:goto1040
-1030 ss=ss+2^(t%(i)+1):t%(mp)=t%(i)+65:t%(i)=0:mv=1:mz%(mn)=t%(mp)-64:mn=mn+1
-1040 next:j=0:fori=0to3:p=t%(i):ifpthent%(i)=0:t%(j)=p:j=j+1:ifj<=ithenmv=1
-1050 next:fori=0to3:gt%(c+i*ds)=t%(i):next:next:return
+1000 mv=0:mn=0:forr=0to3:c=dc+r*dl:x=c:fori=0to3:t%(i)=gt%(x):x=x+ds:next:j=0:lv=0:lm=0
+1010 fori=0to3:p=t%(i):ifp=0then1040
+1020 ifp=lvthent%(j-1)=p+65:lv=0:lm=1:ss=ss+2^(p+1):mz%(mn)=p+1:mn=mn+1:goto1040
+1030 t%(j)=p:lv=p:j=j+1:ifj<=ithenlm=1
+1040 next:fori=jto3:t%(i)=0:next
+1050 iflm=0then1070
+1055 mv=1:x=c:fori=0to3:p=t%(i):sc=0:ifp>64thensc=6:p=p-64
+1060 ifgt%(x)<>porscthengt%(x)=p:y=sa%(x):pokey,cd%(p):pokey+co,sc
+1065 x=x+ds:next
+1070 next:return
+1100 fori=38651to38717step22:pokei,0:pokei+1,0:pokei+2,0:pokei+3,0:next:return
 
-5000 gosub38000:gosub31000:gosub32000:goto39000
-
+5000 gosub38000:gosub31000:gosub32000:ql=0:fori=38804to38812:pokei,6:next:goto39000
 31000 print"{grn}{$04}";:printtab(7)"{$b0}{$60}{$b2}{$b2}{$b2}{$b2}{$60}{$ae}"
 31010 printtab(7)"{$7d}{$b0}{$b1}{$b1}{$b1}{$b1}{$ae}{$7d}":fori=0to3:printtab(7)"{$ab}{$b3}    {$ab}{$b3}":next
 31020 printtab(7)"{$7d}{$ad}{$b2}{$b2}{$b2}{$b2}{$bd}{$7d}":printtab(7)"{$ad}{$60}{$b1}{$b1}{$b1}{$b1}{$60}{$bd}":return
 
-32000 forx=0to15:p=gt%(x):sc=0:ifp>64thensc=6:p=p-64:gt%(x)=p
-32010 gosub900:next:return
+32000 forx=0to15:p=gt%(x):sc=0:gosub900:next:return
 
 36500 x=int(rnd(1)*16):ifgt%(x)then36500
 36510 p=1-(rnd(1)>=.9):gt%(x)=p:sc=2:goto900

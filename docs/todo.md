@@ -4,26 +4,23 @@ Known issues and ideas, found while bringing the repo's tooling in line with vic
 
 ## memory
 
-- **27 bytes free** after quitting (measured with `?fre(0)`). Any new feature needs a tightening pass first.
-- Tightening candidates:
-  - the four move routines (1000, 1400, 1800, 2200) are near-copies of each other;
-  - long variable names (`base`, `idx`, `full`) cost bytes on every use, and BASIC only reads the first two letters anyway;
-  - `goto` after `then` is redundant (`thengoto1150` → `then1150`);
-  - the spaces in `mt or 1` (lines 410-470, the 4 lint warnings);
-  - `data` + `bx$()` for the border could become `{$xx}` codes in string literals (see the cheatsheet);
-  - `md` is set on every move key (lines 400-460) but never read;
-  - `dimt(7)` reserves 8 elements, but only `t(0)`-`t(3)` are used; `dimt(3)` saves 20 bytes. It was sized for a planned user-selectable board up to 8x8; `w` had to stay at 3 for space. If a bigger board comes back (e.g. in an expanded-memory version), size it from `w` then.
-- **`a=fre(0)` (line 300):** forces garbage collection on every loop pass. It was added early on, when screen drawing built a lot of strings; it may no longer be needed (`get a$` and the `chr$()`s in the border still leave some garbage). BASIC V2 can't call `fre(0)` as a bare statement, so if it stays, assign it to a temp variable that already exists (e.g. `x`, which 36000 sets fresh each time) so `a` doesn't take up a variable slot. Better still: measure whether it's needed at all, and if it is, call it only after a move instead of on every idle pass (see speed).
+- **About 2209 bytes free** after quitting, after the first tightening pass (it was 27; see `docs/design.md`, "memory"). Room for sound and more.
+- **`x=fre(0)` (line 310):** forces garbage collection once per key (it used to run on every idle pass, as `a=fre(0)`). It was added early on, when screen drawing built a lot of strings. Now almost nothing makes string garbage (only `get a$`), so it can probably go; check that no collection pause shows up in a long game without it.
 
 ## speed
 
-The game is playable but slow, almost painfully. Where the time likely goes (measure before and after with `ti`):
+The game is playable but slow, almost painfully. The first tightening pass made it smaller but not faster: a move plus the redraw takes about 2 seconds (117 jiffies for a right move with no merges, 138 for an up move with 8 merges; v0.9 took 117 and 156). Measure each change with `ti`, e.g. after `q`: `a0=ti:b=3:l=4:s=-1:gosub1000:gosub32000:?ti-a0`.
 
-- **The idle loop (300-500):** every pass runs `fre(0)`, and while `mt` is non-zero it also calls 6000, which scans all 16 cells (37000). Every key is compared up to 12 times (`a$="w"` twice for each direction). Do the game-over check only after a failed move, and dispatch with `on … goto` or one test per key.
-- **The move routines:** the compression loop repeats whole passes until nothing moves (up to 3 per line), and each step re-tests bounds (`d>w`, `d<0`) that the loop range already guarantees. A single pass that writes each tile to the next free cell does the same job.
-- **Drawing (32000):** after every move, all 16 tiles are redrawn, each through `gosub900` (up to 5 `if`s) and two `poke`s with address arithmetic. Only changed cells need redrawing, and a lookup string (`asc(mid$(...))`) could replace 900's chain.
-- **Variable order:** BASIC finds variables by searching them in creation order, so the hot loop variables (`t`, `c`, `r`, `mp`, `gt`) should be created first in line 100.
-- **Exponent in the score:** `2^(sv+1)` is slow in BASIC V2; doubling a value or a small table would be faster (but costs bytes).
+Already done in the tightening pass: the idle loop waits on `get` alone (no `fre(0)` or game-over scan per pass), the game-over check runs only after a failed move, and sliding is a single pass.
+
+Still to try:
+
+- **Time the parts** first: 1000 (the move) vs 32000 (the redraw) on their own.
+- **Drawing (32000):** after every move, all 16 tiles are redrawn through 900, which computes the address with `int()` and a multiply and the screen code with a 5-term formula. Only changed cells need redrawing (1000 knows which); or loop over rows and columns so the address is a running sum.
+- **The move (1000):** every cell access computes `c+i*s`; a running index (add `s` each step) avoids the multiply. Lines that didn't change still get written back.
+- **Variable order:** BASIC finds variables by searching them in creation order, so the hot loop variables (`i`, `j`, `p`, `c`, `s`, `mp`, `dm`) should be created first in line 100 (costs a few bytes).
+- **Exponent in the score:** `2^(t%(i)+1)` is slow in BASIC V2; a small table or doubling would be faster (but costs bytes).
+- **Dispatch:** each key is compared up to 8 times; most keys are moves, so test those first.
 
 ## sound
 
@@ -35,7 +32,7 @@ Sound effects, similar to RingSort's (see its `docs/design.md` sound table and t
 - **2048 reached** (inverted `1`, power 11): RingSort's win chime;
 - **game over:** a slow falling tone (suggestion).
 
-Each sound needs bytes, so this comes after tightening. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
+Each sound needs bytes; with about 2209 free there is room now. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
 
 ## repo
 

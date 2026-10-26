@@ -83,11 +83,16 @@ Then the tile nearer the wall takes the merge flag and the other is cleared:
 ss = ss + 2^(t%(i)+1)
 t%(mp) = t%(i) + 65
 t%(i) = 0
-mp = 4
 mv = 1
+mz%(mn) = t%(mp) - 64
+mn = mn + 1
 ```
 
-`mp=4` means "no tile yet". `t%(4)` is a sentinel: it's always 0 and is never compared equal to a real tile, so a single test (`ift%(i)<>t%(mp)thenmp=i`) covers both "first tile" and "different tile". Resetting `mp` after a merge means a merged tile can't merge again in the same move, matching 2048's behavior.
+`mp=4` at the start of a line means "no tile yet". `t%(4)` is a sentinel: it's always 0 and is never compared equal to a real tile, so a single test (`ift%(i)<>t%(mp)thenmp=i`) covers both "first tile" and "different tile".
+
+After a merge, `mp` keeps pointing at the merged tile. It now holds its power + 65 (66 or more), which can never equal an unmerged tile (20 at most), so the next tile simply becomes the new `mp`. That's what stops a merged tile from merging again in the same move, matching 2048's behavior. (It used to reset `mp=4` here; that reset isn't needed, and dropping it keeps 1030 within the line limit.)
+
+Each merge also records the new tile's power in `mz%(mn)` and counts it in `mn` (reset to 0 by 1000). A move has at most 8 merges (2 per line), so `mz%(7)` is enough. The sound routine plays one ding per entry (see "sound").
 
 ### sliding
 
@@ -191,6 +196,26 @@ That's screen memory (7680) + row 11 × 22 + column 9, plus 22 per grid row and 
 
 Tile colors: black for a settled tile, blue for a tile that just merged, red for the tile that just appeared.
 
+## sound
+
+**How the VIC makes sound** (see the cheatsheet for details): three square-wave voices, low (36874), middle (36875) and high (36876), plus noise (36877). A voice plays while its register holds 128–255 (higher = higher pitch) and is silent at 0. 36878 is the volume (0–15) for all of them. Line 100 sets the volume to 15 and quitting (340) sets it to 0, so no note is left playing. There are no envelopes or timers: each sound is a BASIC loop, and the game waits while it runs.
+
+**Sweep routine (600):** `fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return` steps register `v` from `f` to `e` by `s`, turns it off, and restores the volume (so a volume fade needs no restore of its own). Same as RingSort's 5000.
+
+**Where each sound plays:** the move sounds play right after the move is computed and before the slow redraw (460 calls 620), so they come as soon as the move is known. The merge dings play back to back in an even rhythm, one per merge, so 3 merges sound different from 4 even though the redraw is slow.
+
+**Tuning:** Claude can't hear xvic, so the values were tuned by the user's ear (the slide and merge sounds were redone once: the first slide was too loud and the first merge sound was a single chirp). A smaller `s` (fractions work, since `poke` drops them) makes a sweep longer and smoother.
+
+| Sound | Line | Voice | Values |
+|---|---|---|---|
+| slide (tiles moved, nothing merged) | 630 | middle 36875 | at volume 5 (600 restores 15): `f=215`, `e=205`, `s=-2`, a short quiet fall |
+| merge, one "coin ding" per merge | 640–650 | high 36876 | for each power `p` in `mz%(0..mn-1)`: note `n=190+3*p` (193 for a 2, 223 for a 2048) held by a 12-step delay loop, then `64+.75*n` (about a fourth higher: the period `256-n` shrinks to ¾) held by 40 steps, then off |
+| 2048 or more made (`p>10`) | 610 | high 36876 | RingSort's win chime right after that merge's ding: notes `195+i*12` for `i`=1–4, each held by a 99-step delay loop |
+| no move | 660 | noise 36877 at 250 | RingSort's cancel woosh: sweeps the **volume** from 15 to 0 by -1; 600 restores it, then 660 turns the noise off |
+| game over | 670 | low 36874 | `f=200`, `e=140`, `s=-.5` (a slow falling tone), after the no-move woosh of the fourth failed direction |
+
+620 picks the move sound: no merges (`mn=0`) → slide, otherwise the dings (640–650 loop over `k`; `for` always runs once, so 620 must skip it when `mn=0`).
+
 ## key queue
 
 A move takes about 2 seconds, and keys pressed meanwhile wait in the KERNAL keyboard buffer (see the cheatsheet: count at 198, keys at 631–640). Row 18 under the board, columns 7–16 (screen 8083, color RAM 38803), shows them: the key being worked on in **green** in the first cell, then the waiting keys in blue, oldest first, and spaces for the rest of the 10 cells.
@@ -229,12 +254,13 @@ After a move that changed the board (`mv=1`, line 460):
 
 - the inner walls turn green (960)
 - the key queue is shown again (965), with any keys pressed during the move
+- the move sound plays (620): the quiet slide, or a coin ding per merge (and the 2048 chime)
 - the tiles are redrawn (32000)
 - a new tile is spawned (36500)
 - the score is shown (39000)
 - the active key leaves the queue (970)
 
-Otherwise 465 colors the wall red, takes the active key off the queue (970) and records the failed direction, and 470 checks for game over.
+Otherwise 465 colors the wall red, takes the active key off the queue (970), records the failed direction and plays the no-move woosh (660), and 470 checks for game over (playing the game over tone, 670).
 
 ## title screen
 
@@ -250,13 +276,65 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 - author  
 - control instructions  
 
+## testing
+
+There are no automated tests. Changes are checked by playing in xvic, and by setting up boards from the BASIC prompt: quit with `q` (the variables survive), set cells of `gt%()`, then `gosub5000:goto300` redraws everything and continues the game loop with that board. Values are powers: 1 = 2, 10 = 1024, 11 = 2048. With Claude, `buildtools/keys.ps1` types the lines and `buildtools/screenshot.ps1` captures the result.
+
+Rules for typing at the prompt:
+- **Keep each line under 88 characters.** Longer direct-mode lines get mangled and can corrupt the BASIC session (it then needs a reset).
+- **`data` doesn't work in direct mode** (`read` finds nothing: `?OUT OF DATA`), so set cells with assignments.
+- A redraw (`r`) or new game (`n`) resets `mt`, the record of failed directions.
+
+**Many merges, including 2048** (press `a`: seven coin dings rising in pitch, the 2048 chime after the last, then 4, 8 / 16, 32 / 64, 128 / 2048 and a score of 2300):
+
+```
+gt%(0)=1:gt%(1)=1:gt%(2)=2:gt%(3)=2
+gt%(4)=3:gt%(5)=3:gt%(6)=4:gt%(7)=4
+gt%(8)=5:gt%(9)=5:gt%(10)=6:gt%(11)=6
+gt%(12)=10:gt%(13)=10:gt%(14)=0:gt%(15)=0
+mt=0:ss=0:gosub5000:goto300
+```
+
+Set pairs to 0 to hear fewer dings (e.g. 3 vs 4 merges).
+
+**Stuck board, for game over** (a checkerboard of 2s and 4s; press `w`, `a`, `s`, `d`: each inner wall turns red with the woosh, and the fourth brings GAME OVER and the falling tone):
+
+```
+fori=0to15:gt%(i)=1+((i+int(i/4))and1):next
+mt=0:gosub5000:goto300
+```
+
+**Every tile character** (powers 5–20: `5`–`9`, `0`, reversed `1`–`9`, reversed `0`):
+
+```
+fori=0to15:gt%(i)=i+5:next:gosub5000:goto300
+```
+
+**The move routine on its own** (no drawing or sound; set a direction, call 1000, print the cells, `mv` and the score). Merged tiles keep their +65 flag until 32000 draws them, so clear the board between tests:
+
+```
+fori=0to15:gt%(i)=0:next:ss=0
+gt%(0)=1:gt%(1)=1:gt%(2)=2:gt%(3)=2
+dc=3:dl=4:ds=-1:gosub1000
+fori=0to3:?gt%(i);:next:?mv;ss
+```
+
+This moves row 0 right and prints `0 0 66 67 1 12`: two merges (powers 1→2 and 2→3, each +65), something moved, score 4+8. The direction values for `w`, `a`, `s`, `d` are in the "movement" table.
+
+**Free memory:** quit, then `?fre(0)` on a cleared screen. Play a few moves first so the game's variables exist.
+
 ## routine map
 
 | line | routine |
 |---|---|
-| 100 | init: dims, seed |
+| 100 | init: dims, seed, volume 15 |
 | 200 | new game: clear the grid and score, full draw, first tile |
 | 300–480 | main loop: key wait, dispatch, move, wall colors, game over |
+| 600 | sound sweep: register `v` from `f` to `e` by `s`, then off and volume back to 15 |
+| 610 | 2048 chime (4 rising notes) |
+| 620–650 | move sound: the quiet slide, or one coin ding per merge (with the chime after a 2048 or bigger) |
+| 660 | no-move woosh (noise, volume fade) |
+| 670 | game over tone |
 | 900 | draw one tile: cell `x`, power `p`, color `sc` |
 | 950 | color one inner wall: `wa`, `ws`, color `wc` |
 | 960 | color all four inner walls green |
@@ -282,7 +360,10 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 | `mt` | directions tried without a change since the last move (= the red walls) |
 | `wa`, `ws`, `wc` | inner wall of the current direction: color RAM address of its first glyph, step, color |
 | `mv` | 1 if the last move changed the board |
-| `mp` | merge scan: position of the last tile seen, 4 = none |
+| `mp` | merge scan: position of the last tile seen, 4 = none (after a merge it stays on the merged tile) |
+| `mz%(7)`, `mn` | the move's merges: new power of each, and how many (0–8); the dings play from them |
+| `k`, `n` | ding loop: merge index, first note's pitch |
+| `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step |
 | `r` | line number in 1000; also the seed dummy at startup |
 | `c` | first cell of the current line; also the screen code of a queued key in 970 |
 | `o` | key queue: first cell for the waiting keys (1 while a key is active, else 0) |
@@ -305,6 +386,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | wall colors | 1434 | 1954 |
 | key queue (active key in green), GAME OVER on the score row | 1581 | 1800 |
 | direction variables renamed (`dc`, `dl`, `ds`, `db`, `mv`) | 1602 | 1779 |
+| sound effects | 2010 | 1299 |
 
 The first tightening pass:
 

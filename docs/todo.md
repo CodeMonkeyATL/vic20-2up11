@@ -4,7 +4,7 @@ Known issues and ideas, found while bringing the repo's tooling in line with vic
 
 ## memory
 
-- **About 1779 bytes free** after quitting, after the direction renames (it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Room for sound and more.
+- **About 1299 bytes free** after quitting, after the sound effects (it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Plenty of room left.
 - **`x=fre(0)` (line 310):** forces garbage collection once per key (it used to run on every idle pass, as `a=fre(0)`). It was added early on, when screen drawing built a lot of strings. Now almost nothing makes string garbage (only `get a$`), so it can probably go; check that no collection pause shows up in a long game without it.
 
 ## speed
@@ -21,18 +21,6 @@ Still to try:
 - **Variable order:** BASIC finds variables by searching them in creation order, so the hot loop variables (`i`, `j`, `p`, `c`, `ds`, `mp`, `mv`) should be created first in line 100 (costs a few bytes).
 - **Exponent in the score:** `2^(t%(i)+1)` is slow in BASIC V2; a small table or doubling would be faster (but costs bytes).
 - **Dispatch:** each key is compared up to 8 times; most keys are moves, so test those first.
-
-## sound
-
-Sound effects, similar to RingSort's (see its `docs/design.md` sound table and the cheatsheet's sound section), as memory allows:
-
-- **slide:** a short soft sweep when tiles move without merging;
-- **merge:** a blip, maybe pitched by the merged power so bigger merges sound higher;
-- **no move in that direction:** RingSort's cancel woosh;
-- **2048 reached** (inverted `1`, power 11): RingSort's win chime;
-- **game over:** a slow falling tone (suggestion).
-
-Each sound needs bytes; with about 1779 free there is room now. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
 
 ## repo
 

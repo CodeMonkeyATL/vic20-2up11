@@ -49,25 +49,25 @@ A merged tile carries `+65` in the grid until it is drawn (see below); powers ne
 
 All four directions use one routine, 1000. The grid is treated as four **lines** (rows for left/right, columns for up/down), and each line is read starting from the side the tiles move toward. Three variables, set by the key dispatch (400–440), describe the direction:
 
-- `b`: the cell where line 0 starts (its cell nearest the wall)
-- `l`: how far the start moves from one line to the next
-- `s`: how far a cell is from the previous one along a line, walking away from the wall
+- `dc` (direction, first cell): the cell where line 0 starts (its cell nearest the wall)
+- `dl` (direction, line step): how far the start moves from one line to the next
+- `ds` (direction, cell step): how far a cell is from the previous one along a line, walking away from the wall
 
-| key | direction | `b` | `l` | `s` | `m` |
+| key | direction | `dc` | `dl` | `ds` | `db` |
 |---|---|---|---|---|---|
 | `w` | up | 0 | 1 | 4 | 1 |
 | `a` | left | 0 | 4 | 1 | 2 |
 | `s` | down | 12 | 1 | -4 | 4 |
 | `d` | right | 3 | 4 | -1 | 8 |
 
-Cell `i` of line `r` is `gt%(b+r*l+i*s)`, so position 0 of the line buffer is always the cell against the wall. For each line, 1000:
+Cell `i` of line `r` is `gt%(dc+r*dl+i*ds)`, so position 0 of the line buffer is always the cell against the wall. For each line, 1000:
 
 1. copies the line into `t%(0..3)` (line 1000; `c` is the line's first cell)
 2. merges pairs, scanning from the wall (1010–1030)
 3. slides the tiles toward the wall (1040)
 4. writes the line back (1050)
 
-and sets `dm=1` if anything merged or moved. `m` is the direction's bit for game over detection.
+and sets `mv=1` if anything merged or moved. `db` is the direction's bit for game over detection.
 
 ### merge rules
 
@@ -84,14 +84,14 @@ ss = ss + 2^(t%(i)+1)
 t%(mp) = t%(i) + 65
 t%(i) = 0
 mp = 4
-dm = 1
+mv = 1
 ```
 
 `mp=4` means "no tile yet". `t%(4)` is a sentinel: it's always 0 and is never compared equal to a real tile, so a single test (`ift%(i)<>t%(mp)thenmp=i`) covers both "first tile" and "different tile". Resetting `mp` after a merge means a merged tile can't merge again in the same move, matching 2048's behavior.
 
 ### sliding
 
-One pass: `j` is the next free position from the wall; each tile is moved from `i` to `j`, and `j` advances. A tile moved (`j<i` before advancing, tested as `j<=i` after) sets `dm=1`.
+One pass: `j` is the next free position from the wall; each tile is moved from `i` to `j`, and `j` advances. A tile moved (`j<i` before advancing, tested as `j<=i` after) sets `mv=1`.
 
 ## merge flag and visual feedback
 
@@ -127,7 +127,7 @@ The seed is `rnd(-ti)` at startup, so every run deals differently.
 
 ## game over detection
 
-The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`m`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=mormt`). A new game or a redraw also resets `mt`.
+The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`db`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=dbormt`). A new game or a redraw also resets `mt`.
 
 When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" at the right end of the score row (reverse red, columns 13–21; `tab` can't be used there, see the cheatsheet). It gets there with `{home}`, 4 `{down}`s and 9 `{left}`s: `{left}` at column 0 wraps to the end of the row above, so this is 3 bytes shorter than 13 `{right}`s and resets `mt`. The score fits to its left up to 6 digits. The program keeps running: `n` starts a new game, `q` quits.
 
@@ -143,7 +143,7 @@ The four inner-wall glyphs on the side the tiles move toward show what a move di
 
 The red sides are exactly the bits in `mt`, so at game over all four inner walls are red, showing that every direction was tried. There's no "invalid move" text; the red wall says it.
 
-The colors are poked into color RAM; the glyphs don't change. 400–440 set the wall for the direction along with `b`, `l`, `s`, `m`:
+The colors are poked into color RAM; the glyphs don't change. 400–440 set the wall for the direction along with `dc`, `dl`, `ds`, `db`:
 
 | key | wall | `wa` (color RAM of the first glyph) | `ws` (step) |
 |---|---|---|---|
@@ -225,7 +225,7 @@ So the leftmost green key is always the move in progress, and it only disappears
 - quit: q  
 - movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue, shows the key queue (965) and runs the move)  
 
-After a move that changed the board (`dm=1`, line 460):
+After a move that changed the board (`mv=1`, line 460):
 
 - the inner walls turn green (960)
 - the key queue is shown again (965), with any keys pressed during the move
@@ -262,7 +262,7 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 | 960 | color all four inner walls green |
 | 965 | show the key queue with the active key `a$` first, in green (falls into 970) |
 | 970 | show the waiting keys under the board (970–980) |
-| 1000 | move all four lines in the direction set by `b`, `l`, `s` |
+| 1000 | move all four lines in the direction set by `dc`, `dl`, `ds` |
 | 5000 | full redraw: title, border, tiles, score |
 | 31000 | draw the border |
 | 32000 | draw all tiles (strips the merge flag) |
@@ -277,11 +277,11 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 | `gt%(15)` | the grid: a power per cell, 0 = empty (+65 = just merged, until drawn) |
 | `t%(4)` | line buffer: `t%(0..3)` is one line, wall side first; `t%(4)` is the always-0 sentinel for `mp` |
 | `a$` | key pressed |
-| `b`, `l`, `s` | direction: first cell of line 0, step per line, step per cell (see "movement") |
-| `m` | direction bit for game over (w 1, a 2, s 4, d 8) |
+| `dc`, `dl`, `ds` | direction: first cell of line 0, step per line, step per cell (see "movement") |
+| `db` | direction bit for game over (w 1, a 2, s 4, d 8) |
 | `mt` | directions tried without a change since the last move (= the red walls) |
 | `wa`, `ws`, `wc` | inner wall of the current direction: color RAM address of its first glyph, step, color |
-| `dm` | 1 if the last move changed the board |
+| `mv` | 1 if the last move changed the board |
 | `mp` | merge scan: position of the last tile seen, 4 = none |
 | `r` | line number in 1000; also the seed dummy at startup |
 | `c` | first cell of the current line; also the screen code of a queued key in 970 |
@@ -304,6 +304,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | double border | 1239 | 2170 |
 | wall colors | 1434 | 1954 |
 | key queue (active key in green), GAME OVER on the score row | 1581 | 1800 |
+| direction variables renamed (`dc`, `dl`, `ds`, `db`, `mv`) | 1602 | 1779 |
 
 The first tightening pass:
 

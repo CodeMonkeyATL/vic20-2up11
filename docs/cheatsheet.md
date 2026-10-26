@@ -40,6 +40,10 @@ These are the codes you embed in strings (e.g. `print "{clr}"`) and are recogniz
 
 These are the full set of VIC-20 cursor/mode controls supported by petcat.
 
+**`tab()` and `pos()` count from the start of the logical line, not the screen row.** The screen editor links up to 4 rows (88 characters) into one logical line whenever printing runs past the right edge, e.g. a `print` of exactly 22 characters without `;`. On a row linked to the one above, the cursor is already past column 22 as far as `tab` knows, so `tab(13)` does nothing. Verified in xvic: `print"{home}{down}{down}{down}"tab(13)"x"` printed `x` at column 0 of a title bar row. To reach a column reliably, use cursor codes (1 byte each) or KERNAL PLOT (`poke781,row:poke782,col:poke783,0:sys65520`, about 29 bytes).
+
+**`{left}` at column 0 wraps to the last column of the row above.** So a spot near the right edge is cheaper to reach from the next row: `{home}{down}{down}{down}{down}` + 9 `{left}` lands on row 3, column 13 (14 bytes, vs 17 with 13 `{right}`). Verified in xvic (2up11's GAME OVER).
+
 ## ✍️ Any PETSCII code in a string: `{$xx}`
 
 petcat turns `{$xx}` into the single byte `xx` (hex). So any PETSCII code can go straight into a string literal as plain ASCII source, including graphic glyphs that are hard to type in a PC editor. For example, `print"{$e6}{$e6}{$e6}"` prints three checkerboards.
@@ -140,6 +144,22 @@ The graphic glyphs are 96–127 and 160–191. The codes 192–254 repeat them: 
 Page 3 draws the two box styles from meatloaf-prgs `wifi/src/wifi-vic20.bas` with its codes. Rounded: 117 96 105 / 98 … 125 / 106 96 107. Square: 176 96 174 / 179 … 171 / 173 96 189. In the square style the sides are ┤ and ├, so their stubs stick out; use 125 on both sides for a plain square box.
 
 ![glyphtest page 3: wifi-vic20 boxes](../screenshots/glyphtest-boxes.png)
+
+## ⌨️ Keyboard buffer (look-ahead)
+
+The KERNAL scans the keyboard from its interrupt, 60 times a second, even while BASIC is busy. Keys pressed during slow code aren't lost: they wait in a 10-key buffer until `get` (or `input`) takes them.
+
+| Address | Meaning |
+|---|---|
+| 198 | number of keys waiting (0–10) |
+| 631–640 | the waiting keys as PETSCII, oldest first: 631 is the one the next `get` returns |
+
+- **Peek to look ahead without taking keys:** `peek(198)` keys wait at `peek(631)` … `peek(630+peek(198))`. Reading them doesn't remove them; only `get`/`input` does, and then the rest shift down.
+- **Flush:** `poke198,0` discards everything waiting (e.g. keys pressed during a splash screen or a long redraw).
+- **Wait for a key without a loop:** `wait198,255` returns as soon as a key is waiting, then `get` reads it.
+- **Showing the keys on screen:** buffer bytes are PETSCII, screen memory takes screen codes. For letters (65–90), `and63` gives the screen code (1–26); digits and space are the same in both.
+
+Verified in xvic with 2up11's key queue, which pokes the waiting keys under the board while a move is computed: typing `dsawdsaw` during a move showed `SAWDSAW` (the `d` had already been read by `get`). Flush and `wait198,255` are used by RingSort's splash screen.
 
 ## 🧠 Color registers
 

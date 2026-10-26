@@ -4,7 +4,7 @@ Known issues and ideas, found while bringing the repo's tooling in line with vic
 
 ## memory
 
-- **About 1954 bytes free** after quitting, after the wall colors (it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Room for sound and more.
+- **About 1800 bytes free** after quitting, after the key queue (it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Room for sound and more.
 - **`x=fre(0)` (line 310):** forces garbage collection once per key (it used to run on every idle pass, as `a=fre(0)`). It was added early on, when screen drawing built a lot of strings. Now almost nothing makes string garbage (only `get a$`), so it can probably go; check that no collection pause shows up in a long game without it.
 
 ## speed
@@ -32,7 +32,7 @@ Sound effects, similar to RingSort's (see its `docs/design.md` sound table and t
 - **2048 reached** (inverted `1`, power 11): RingSort's win chime;
 - **game over:** a slow falling tone (suggestion).
 
-Each sound needs bytes; with about 1954 free there is room now. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
+Each sound needs bytes; with about 1800 free there is room now. A shared sweep routine (like RingSort's 5000) keeps the cost per sound small.
 
 ## naming
 

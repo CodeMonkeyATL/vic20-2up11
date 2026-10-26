@@ -6,14 +6,14 @@
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200
 340 ifa$="q"thenprint"{blu}":end
-400 ifa$="w"thenb=0:l=1:s=4:m=1:wa=38629:ws=1:goto450
-410 ifa$="a"thenb=0:l=4:s=1:m=2:wa=38650:ws=22:goto450
-420 ifa$="s"thenb=12:l=1:s=-4:m=4:wa=38739:ws=1:goto450
+400 ifa$="w"thendc=0:dl=1:ds=4:db=1:wa=38629:ws=1:goto450
+410 ifa$="a"thendc=0:dl=4:ds=1:db=2:wa=38650:ws=22:goto450
+420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38739:ws=1:goto450
 430 ifa$<>"d"then300
-440 b=3:l=4:s=-1:m=8:wa=38655:ws=22
-450 wc=6:gosub950:gosub965:gosub1000:ifdm=0then465
+440 dc=3:dl=4:ds=-1:db=8:wa=38655:ws=22
+450 wc=6:gosub950:gosub965:gosub1000:ifmv=0then465
 460 mt=0:gosub960:gosub965:gosub32000:gosub36500:gosub39000:gosub970:goto300
-465 wc=2:gosub950:gosub970:mt=mormt
+465 wc=2:gosub950:gosub970:mt=dbormt
 470 ifmt=15thenprint"{home}{down}{down}{down}{down}{left}{left}{left}{left}{left}{left}{left}{left}{left}{reverse on}{red}game over":mt=0
 480 goto300
 
@@ -26,12 +26,12 @@
 970 fori=oto9:c=32:ifi-o<peek(198)thenc=peek(631+i-o)and63
 980 poke8083+i,c:poke38803+i,6:next:o=0:return
 
-1000 dm=0:forr=0to3:c=b+r*l:fori=0to3:t%(i)=gt%(c+i*s):next:mp=4
+1000 mv=0:forr=0to3:c=dc+r*dl:fori=0to3:t%(i)=gt%(c+i*ds):next:mp=4
 1010 fori=0to3:ift%(i)=0then1040
 1020 ift%(i)<>t%(mp)thenmp=i:goto1040
-1030 ss=ss+2^(t%(i)+1):t%(mp)=t%(i)+65:t%(i)=0:mp=4:dm=1
-1040 next:j=0:fori=0to3:p=t%(i):ifpthent%(i)=0:t%(j)=p:j=j+1:ifj<=ithendm=1
-1050 next:fori=0to3:gt%(c+i*s)=t%(i):next:next:return
+1030 ss=ss+2^(t%(i)+1):t%(mp)=t%(i)+65:t%(i)=0:mp=4:mv=1
+1040 next:j=0:fori=0to3:p=t%(i):ifpthent%(i)=0:t%(j)=p:j=j+1:ifj<=ithenmv=1
+1050 next:fori=0to3:gt%(c+i*ds)=t%(i):next:next:return
 
 5000 gosub38000:gosub31000:gosub32000:goto39000
 

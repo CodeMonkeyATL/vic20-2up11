@@ -142,17 +142,27 @@ When `mt=15`, all four directions have failed. That can only happen on a full bo
 
 ### border drawing
 
-31000 prints the box in green with `tab(7)`, using the square box glyphs as `{$xx}` codes in string literals: ┌ `{$b0}`, top tee `{$b1}`, ┐ `{$ae}`, sides `{$b3}`/`{$ab}`, └ `{$ad}`, bottom tee `{$b2}`, ┘ `{$bd}`. The tees give the border its tick marks.
+31000 prints a double box in green, 8×8 characters at `tab(7)` (columns 7–14, centered on the 22-column screen), rows 9–16. It uses the square box glyphs and the horizontal line as `{$xx}` codes in string literals:
+
+```
+row  9   b0 60 b2 b2 b2 b2 60 ae     outer top
+row 10   7d b0 b1 b1 b1 b1 ae 7d     inner top
+rows 11-14  ab b3 .. .. .. .. ab b3  sides; the 4x4 tiles go in the gap
+row 15   7d ad b2 b2 b2 b2 bd 7d     inner bottom
+row 16   ad 60 b1 b1 b1 b1 60 bd     outer bottom
+```
+
+┌ `b0`, ┐ `ae`, └ `ad`, ┘ `bd`, ─ `60`, │ `7d`, tees `b1`/`b2`/`b3`/`ab`. The tees of the outer and inner boxes face each other, so each grid row and column gets a rung between the two walls. The first `print` has no `{down}`: it starts on the row right after the key help, which puts the tiles on rows 11–14. The "inner wall" is the four tee glyphs beside each side of the grid (row 10, row 15, column 8 and column 13 next to the tiles).
 
 ### tile drawing
 
 900 pokes a tile straight into screen memory, inside the border:
 
 ```
-sp = 7930 + x + 18*int(x/4)
+sp = 7931 + x + 18*int(x/4)
 ```
 
-That's screen memory (7680) + row 11 × 22 + column 8, plus 22 per grid row and 1 per column: `x + 18*int(x/4)` is `row*22 + col` for `x = row*4 + col`. The color goes to `sp + 30720` in color RAM.
+That's screen memory (7680) + row 11 × 22 + column 9, plus 22 per grid row and 1 per column: `x + 18*int(x/4)` is `row*22 + col` for `x = row*4 + col`. The color goes to `sp + 30720` in color RAM.
 
 Tile colors: black for a settled tile, blue for a tile that just merged, red for the tile that just appeared.
 
@@ -237,6 +247,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 |---|---|---|
 | `v0.9` (untightened) | 3156 | 27 |
 | first tightening pass | 1200 | 2209 |
+| double border | 1239 | 2170 |
 
 The first tightening pass:
 

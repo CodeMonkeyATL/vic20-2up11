@@ -15,7 +15,7 @@
 460 mt=mormt:ifmt=15thenprint"{down}{blu}game over":mt=0
 470 goto300
 
-900 sp=7930+x+18*int(x/4):pokesp+30720,sc
+900 sp=7931+x+18*int(x/4):pokesp+30720,sc
 910 pokesp,48+p-10*int(p/10)-128*(p>10)+16*(p=0):return
 
 1000 dm=0:forr=0to3:c=b+r*l:fori=0to3:t%(i)=gt%(c+i*s):next:mp=4
@@ -27,8 +27,9 @@
 
 5000 gosub38000:gosub31000:gosub32000:goto39000
 
-31000 print"{grn}{down}{$04}";:printtab(7)"{$b0}{$b1}{$b1}{$b1}{$b1}{$ae}":fori=0to3
-31010 printtab(7)"{$b3}    {$ab}":next:printtab(7)"{$ad}{$b2}{$b2}{$b2}{$b2}{$bd}":return
+31000 print"{grn}{$04}";:printtab(7)"{$b0}{$60}{$b2}{$b2}{$b2}{$b2}{$60}{$ae}"
+31010 printtab(7)"{$7d}{$b0}{$b1}{$b1}{$b1}{$b1}{$ae}{$7d}":fori=0to3:printtab(7)"{$ab}{$b3}    {$ab}{$b3}":next
+31020 printtab(7)"{$7d}{$ad}{$b2}{$b2}{$b2}{$b2}{$bd}{$7d}":printtab(7)"{$ad}{$60}{$b1}{$b1}{$b1}{$b1}{$60}{$bd}":return
 
 32000 forx=0to15:p=gt%(x):sc=0:ifp>64thensc=6:p=p-64:gt%(x)=p
 32010 gosub900:next:return

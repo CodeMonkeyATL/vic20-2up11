@@ -129,7 +129,7 @@ The seed is `rnd(-ti)` at startup, so every run deals differently.
 
 The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`m`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=mormt`). A new game or a redraw also resets `mt`.
 
-When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" and resets `mt`. The program keeps running: `n` starts a new game, `q` quits.
+When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" at the right end of the score row (reverse red, columns 13–21; `tab` can't be used there, see the cheatsheet). It gets there with `{home}`, 4 `{down}`s and 9 `{left}`s: `{left}` at column 0 wraps to the end of the row above, so this is 3 bytes shorter than 13 `{right}`s and resets `mt`. The score fits to its left up to 6 digits. The program keeps running: `n` starts a new game, `q` quits.
 
 ## move indicator (wall colors)
 
@@ -152,7 +152,7 @@ The colors are poked into color RAM; the glyphs don't change. 400–440 set the 
 | `s` | bottom, row 15, columns 9–12 | 38739 | 1 |
 | `d` | right, column 13, rows 11–14 | 38655 | 22 |
 
-450 colors the wall blue (950 with `wc=6`) and runs the move. A move that changed the board goes to 460, which recolors all four inner walls green (960; this also clears any red sides). Otherwise 470 colors the wall red (950 with `wc=2`).
+450 colors the wall blue (950 with `wc=6`) and runs the move. A move that changed the board goes to 460, which recolors all four inner walls green (960; this also clears any red sides). Otherwise 465 colors the wall red (950 with `wc=2`).
 
 A redraw (`r`) or a new game reprints the whole border in green and resets `mt`, so the screen and the game over check agree: the player tries the dead-end directions again to rediscover them. The score is unaffected.
 
@@ -191,6 +191,26 @@ That's screen memory (7680) + row 11 × 22 + column 9, plus 22 per grid row and 
 
 Tile colors: black for a settled tile, blue for a tile that just merged, red for the tile that just appeared.
 
+## key queue
+
+A move takes about 2 seconds, and keys pressed meanwhile wait in the KERNAL keyboard buffer (see the cheatsheet: count at 198, keys at 631–640). Row 18 under the board, columns 7–16 (screen 8083, color RAM 38803), shows them: the key being worked on in **green** in the first cell, then the waiting keys in blue, oldest first, and spaces for the rest of the 10 cells.
+
+```
+965 poke8083,asc(a$)and63:poke38803,5:o=1
+970 fori=oto9:c=32:ifi-o<peek(198)thenc=peek(631+i-o)and63
+980 poke8083+i,c:poke38803+i,6:next:o=0:return
+```
+
+965 puts the active key (`a$`, already taken by `get`) in the first cell and falls into 970 with the offset `o=1`, so the waiting keys start in the second cell. Called as `gosub970` (with `o=0`, which 980 restores), the waiting keys start in the first cell. `and63` turns a PETSCII letter (65–90) into its screen code (1–26); digits and space are the same in both. 970 only peeks, so the keys stay queued for `get`.
+
+| when | call | shows |
+|---|---|---|
+| a move starts (450) | 965 | the active key, then the waiting keys |
+| the move's result is known (460, before the slow redraw) | 965 | the same, plus keys typed during the move |
+| the move is complete (end of 460, or 465 for a move that changed nothing) | 970 | only the waiting keys: the active key leaves the queue |
+
+So the leftmost green key is always the move in progress, and it only disappears once that move is completely done.
+
 ## control loop
 
 ```
@@ -203,16 +223,18 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 - debug dump: % (prints each cell's index and power)  
 - new game: n  
 - quit: q  
-- movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue and runs the move)  
+- movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue, shows the key queue (965) and runs the move)  
 
 After a move that changed the board (`dm=1`, line 460):
 
 - the inner walls turn green (960)
+- the key queue is shown again (965), with any keys pressed during the move
 - the tiles are redrawn (32000)
 - a new tile is spawned (36500)
 - the score is shown (39000)
+- the active key leaves the queue (970)
 
-Otherwise 470 colors the wall red, records the failed direction and checks for game over.
+Otherwise 465 colors the wall red, takes the active key off the queue (970) and records the failed direction, and 470 checks for game over.
 
 ## title screen
 
@@ -238,6 +260,8 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 | 900 | draw one tile: cell `x`, power `p`, color `sc` |
 | 950 | color one inner wall: `wa`, `ws`, color `wc` |
 | 960 | color all four inner walls green |
+| 965 | show the key queue with the active key `a$` first, in green (falls into 970) |
+| 970 | show the waiting keys under the board (970–980) |
 | 1000 | move all four lines in the direction set by `b`, `l`, `s` |
 | 5000 | full redraw: title, border, tiles, score |
 | 31000 | draw the border |
@@ -260,7 +284,8 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 | `dm` | 1 if the last move changed the board |
 | `mp` | merge scan: position of the last tile seen, 4 = none |
 | `r` | line number in 1000; also the seed dummy at startup |
-| `c` | first cell of the current line |
+| `c` | first cell of the current line; also the screen code of a queued key in 970 |
+| `o` | key queue: first cell for the waiting keys (1 while a key is active, else 0) |
 | `i`, `j` | loop counters; `j` is also the next free position when sliding |
 | `x` | cell index (drawing, spawning, new game loop); also takes `fre(0)` |
 | `p` | a tile's power |
@@ -278,6 +303,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | first tightening pass | 1200 | 2209 |
 | double border | 1239 | 2170 |
 | wall colors | 1434 | 1954 |
+| key queue (active key in green), GAME OVER on the score row | 1581 | 1800 |
 
 The first tightening pass:
 

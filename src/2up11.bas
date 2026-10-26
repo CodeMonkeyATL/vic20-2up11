@@ -11,9 +11,10 @@
 420 ifa$="s"thenb=12:l=1:s=-4:m=4:wa=38739:ws=1:goto450
 430 ifa$<>"d"then300
 440 b=3:l=4:s=-1:m=8:wa=38655:ws=22
-450 wc=6:gosub950:gosub1000:ifdm=0then470
-460 mt=0:gosub960:gosub32000:gosub36500:gosub39000:goto300
-470 wc=2:gosub950:mt=mormt:ifmt=15thenprint"{down}{blu}game over":mt=0
+450 wc=6:gosub950:gosub965:gosub1000:ifdm=0then465
+460 mt=0:gosub960:gosub965:gosub32000:gosub36500:gosub39000:gosub970:goto300
+465 wc=2:gosub950:gosub970:mt=mormt
+470 ifmt=15thenprint"{home}{down}{down}{down}{down}{left}{left}{left}{left}{left}{left}{left}{left}{left}{reverse on}{red}game over":mt=0
 480 goto300
 
 900 sp=7931+x+18*int(x/4):pokesp+30720,sc
@@ -21,6 +22,9 @@
 
 950 fori=0to3:pokewa+i*ws,wc:next:return
 960 fori=0to3:pokei+38629,5:pokei+38739,5:poke22*i+38650,5:poke22*i+38655,5:next:return
+965 poke8083,asc(a$)and63:poke38803,5:o=1
+970 fori=oto9:c=32:ifi-o<peek(198)thenc=peek(631+i-o)and63
+980 poke8083+i,c:poke38803+i,6:next:o=0:return
 
 1000 dm=0:forr=0to3:c=b+r*l:fori=0to3:t%(i)=gt%(c+i*s):next:mp=4
 1010 fori=0to3:ift%(i)=0then1040

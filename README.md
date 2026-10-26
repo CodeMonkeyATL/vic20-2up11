@@ -28,9 +28,11 @@ After each move, a new tile appears in an empty space, drawn in red: a 2 (90% of
 The game ends when no moves are possible. 
 The board must have at least one empty space or at least one adjacent pair of matching tiles. 
 If neither condition is true, the game is over. 
-The game shows GAME OVER once the board is full and you've tried all four directions without anything moving.
+The game shows GAME OVER at the right end of the score row once the board is full and you've tried all four directions without anything moving.
 
 **Wall colors:** the inner wall on the side you move toward turns blue while the move runs. It turns back to green if the tiles moved, or red if nothing could move. A red wall stays red until a move works, so at game over all four inner walls are red.
+
+**Key queue:** you can type moves ahead while the VIC is still working. They show under the board: the move in progress first, in green, then the keys waiting their turn, oldest first.
 
 | Key | Action |
 |---|---|

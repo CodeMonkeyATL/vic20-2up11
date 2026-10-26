@@ -1,22 +1,26 @@
 100 dimgt%(15),t%(4):r=rnd(-ti)
-200 forx=0to15:gt%(x)=0:next:ss=0:gosub5000:gosub36500
+200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:gosub5000:gosub36500
 
 300 geta$:ifa$=""then300
-310 x=fre(0):ifa$="r"thengosub5000:goto300
+310 x=fre(0):ifa$="r"thenmt=0:gosub5000:goto300
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200
 340 ifa$="q"thenprint"{blu}":end
-400 ifa$="w"thenb=0:l=1:s=4:m=1:goto450
-410 ifa$="a"thenb=0:l=4:s=1:m=2:goto450
-420 ifa$="s"thenb=12:l=1:s=-4:m=4:goto450
+400 ifa$="w"thenb=0:l=1:s=4:m=1:wa=38629:ws=1:goto450
+410 ifa$="a"thenb=0:l=4:s=1:m=2:wa=38650:ws=22:goto450
+420 ifa$="s"thenb=12:l=1:s=-4:m=4:wa=38739:ws=1:goto450
 430 ifa$<>"d"then300
-440 b=3:l=4:s=-1:m=8
-450 gosub1000:ifdmthenmt=0:gosub32000:gosub36500:gosub39000:goto300
-460 mt=mormt:ifmt=15thenprint"{down}{blu}game over":mt=0
-470 goto300
+440 b=3:l=4:s=-1:m=8:wa=38655:ws=22
+450 wc=6:gosub950:gosub1000:ifdm=0then470
+460 mt=0:gosub960:gosub32000:gosub36500:gosub39000:goto300
+470 wc=2:gosub950:mt=mormt:ifmt=15thenprint"{down}{blu}game over":mt=0
+480 goto300
 
 900 sp=7931+x+18*int(x/4):pokesp+30720,sc
 910 pokesp,48+p-10*int(p/10)-128*(p>10)+16*(p=0):return
+
+950 fori=0to3:pokewa+i*ws,wc:next:return
+960 fori=0to3:pokei+38629,5:pokei+38739,5:poke22*i+38650,5:poke22*i+38655,5:next:return
 
 1000 dm=0:forr=0to3:c=b+r*l:fori=0to3:t%(i)=gt%(c+i*s):next:mp=4
 1010 fori=0to3:ift%(i)=0then1040

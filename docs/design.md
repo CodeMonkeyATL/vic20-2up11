@@ -127,9 +127,34 @@ The seed is `rnd(-ti)` at startup, so every run deals differently.
 
 ## game over detection
 
-The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`m`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (460, `mt=mormt`).
+The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`m`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=mormt`). A new game or a redraw also resets `mt`.
 
-When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 460 prints "game over" and resets `mt`. The program keeps running: `n` starts a new game, `q` quits.
+When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" and resets `mt`. The program keeps running: `n` starts a new game, `q` quits.
+
+## move indicator (wall colors)
+
+The four inner-wall glyphs on the side the tiles move toward show what a move did:
+
+| when | color |
+|---|---|
+| while the move runs | blue (6) |
+| the move changed the board | green (5), the border color |
+| nothing moved | red (2), until a move changes the board |
+
+The red sides are exactly the bits in `mt`, so at game over all four inner walls are red, showing that every direction was tried. There's no "invalid move" text; the red wall says it.
+
+The colors are poked into color RAM; the glyphs don't change. 400–440 set the wall for the direction along with `b`, `l`, `s`, `m`:
+
+| key | wall | `wa` (color RAM of the first glyph) | `ws` (step) |
+|---|---|---|---|
+| `w` | top, row 10, columns 9–12 | 38629 | 1 |
+| `a` | left, column 8, rows 11–14 | 38650 | 22 |
+| `s` | bottom, row 15, columns 9–12 | 38739 | 1 |
+| `d` | right, column 13, rows 11–14 | 38655 | 22 |
+
+450 colors the wall blue (950 with `wc=6`) and runs the move. A move that changed the board goes to 460, which recolors all four inner walls green (960; this also clears any red sides). Otherwise 470 colors the wall red (950 with `wc=2`).
+
+A redraw (`r`) or a new game reprints the whole border in green and resets `mt`, so the screen and the game over check agree: the player tries the dead-end directions again to rediscover them. The score is unaffected.
 
 ## screen rendering
 
@@ -169,7 +194,7 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 ## control loop
 
 ```
-300–470
+300–480
 ```
 
 300 waits for a key. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
@@ -178,15 +203,16 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 - debug dump: % (prints each cell's index and power)  
 - new game: n  
 - quit: q  
-- movement keys: w, a, s, d (400–440 set the direction, 450 runs it)  
+- movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue and runs the move)  
 
-After a move that changed the board (`dm=1`, line 450):
+After a move that changed the board (`dm=1`, line 460):
 
+- the inner walls turn green (960)
 - the tiles are redrawn (32000)
 - a new tile is spawned (36500)
 - the score is shown (39000)
 
-Otherwise 460 records the failed direction and checks for game over.
+Otherwise 470 colors the wall red, records the failed direction and checks for game over.
 
 ## title screen
 
@@ -208,8 +234,10 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 |---|---|
 | 100 | init: dims, seed |
 | 200 | new game: clear the grid and score, full draw, first tile |
-| 300–470 | main loop: key wait, dispatch, move, game over |
+| 300–480 | main loop: key wait, dispatch, move, wall colors, game over |
 | 900 | draw one tile: cell `x`, power `p`, color `sc` |
+| 950 | color one inner wall: `wa`, `ws`, color `wc` |
+| 960 | color all four inner walls green |
 | 1000 | move all four lines in the direction set by `b`, `l`, `s` |
 | 5000 | full redraw: title, border, tiles, score |
 | 31000 | draw the border |
@@ -227,7 +255,8 @@ It clears the screen and uses reverse-video PETSCII and color codes to display:
 | `a$` | key pressed |
 | `b`, `l`, `s` | direction: first cell of line 0, step per line, step per cell (see "movement") |
 | `m` | direction bit for game over (w 1, a 2, s 4, d 8) |
-| `mt` | directions tried without a change since the last move |
+| `mt` | directions tried without a change since the last move (= the red walls) |
+| `wa`, `ws`, `wc` | inner wall of the current direction: color RAM address of its first glyph, step, color |
 | `dm` | 1 if the last move changed the board |
 | `mp` | merge scan: position of the last tile seen, 4 = none |
 | `r` | line number in 1000; also the seed dummy at startup |
@@ -248,6 +277,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | `v0.9` (untightened) | 3156 | 27 |
 | first tightening pass | 1200 | 2209 |
 | double border | 1239 | 2170 |
+| wall colors | 1434 | 1954 |
 
 The first tightening pass:
 

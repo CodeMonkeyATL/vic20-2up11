@@ -1,0 +1,21 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskLabel": "Build and run in xvic",
+      "appliesTo": "*.bas",
+      "type": "default",
+      "contextType": "build",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceRoot}\\buildtools\\build-and-run.ps1",
+        "-BasFile",
+        "${file}"
+      ]
+    }
+  ]
+}

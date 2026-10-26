@@ -50,69 +50,83 @@ The game is written entirely in BASIC V2 and fits within the memory constraints 
 
 ```
 src/
-  2up11.bas        main BASIC source file
+  2up11.bas        the game
 
 prgs/
-  (auto-generated .prg files created by the GitHub Action)
-
-tools/
-  petcat           linux petcat executable used by CI
-  petcat.exe       windows petcat executable for local development
+  (.prg files built by the GitHub Action)
 
 docs/
-  design.md        optional notes about game logic or memory usage
-  changelog.md     version history
+  design.md            how the program works
+  todo.md              known issues and ideas
+  basic-guidelines.md  how we write BASIC for the unexpanded VIC-20
+  cheatsheet.md        petcat tokens, VIC-20 color codes and registers
 
-.github/
-  workflows/
-    build-prg.yml  automatic build on PR merge
+screenshots/
+  images used in this README and the cheatsheet (temp/ holds working captures and is gitignored)
+
+tools/
+  petcat, petcat.exe   petcat for Linux (CI) and Windows (local builds)
+  c1541, c1541.exe     c1541 for making disk images
+
+buildtools/
+  build-and-run.ps1  local build: check, petcat the current .bas, then autostart it in xvic
+  check-basic.ps1    lint a .bas file against docs/basic-guidelines.md (warnings only)
+  screenshot.ps1     save the running xvic screen to screenshots/temp/ (gitignored)
+  keys.ps1           type keys into the running xvic (for testing)
+  tasks.vs.json      Visual Studio task (copy to .vs/tasks.vs.json)
+  tasks.json         VS Code task (copy to .vscode/tasks.json)
+
+.github/workflows/
+  build-prg.yml      builds .prg files when a pull request is merged
 ```
 
 ## building
 
-The `.prg` file is generated using `petcat`. The repository includes both Linux and Windows versions of petcat in the `tools` folder.
-
-To build manually:
+The `.prg` is generated with `petcat`. The repository includes Linux and Windows versions in `tools/`.
 
 ```
-petcat -w2 -o 2up11[.prg] src/2up11.bas
+petcat -w2 -l 1001 -o prgs/2up11 src/2up11.bas
 ```
 
-This produces a PRG that can be loaded on a VIC-20 or in VICE.
+`-l 1001` sets the load address to $1001, the start of BASIC on an unexpanded VIC-20.
+
+### build and run from the IDE
+
+`buildtools/build-and-run.ps1` checks the open `.bas` file with `check-basic.ps1`, builds it into `prgs/` and autostarts it in xvic. The check prints warnings (missing jump targets, lines too long to edit on the VIC, stray spaces, line-number problems) but never stops the build. If xvic is already running with its remote monitor on port 6510, the program is sent to that window; otherwise a new xvic is started with `-remotemonitor`. `petcat.exe` and `xvic.exe` must be on your `PATH`.
+
+The IDE config folders are gitignored, so copy the task file into place once:
+
+- Visual Studio (Open Folder): copy `buildtools/tasks.vs.json` to `.vs/tasks.vs.json`, then Build with a `.bas` file active.
+- VS Code: copy `buildtools/tasks.json` to `.vscode/tasks.json`, then run the default build task.
 
 ## running
 
-### run in VICE
+### in VICE
 
 ```
-xvic -memory unexpanded 2up11.prg
+xvic -memory none -autostart prgs/2up11
 ```
 
 or load it from the BASIC prompt:
 
 ```
-load "2up11.prg",8
+load "2up11",8
 run
 ```
 
-### run on real hardware
+### on real hardware
 
-Copy the PRG to a disk image or transfer it using your preferred method (SD2IEC, Pi1541, etc.). The game requires no RAM expansion.
-
-## development notes
-
-Additional technical notes, PETSCII layout sketches, and memory usage details can be found in the `docs` folder. These files are optional and may grow as the project evolves.
+Copy the PRG to a disk image or transfer it with your preferred method (SD2IEC, Pi1541, etc.). No RAM expansion is needed.
 
 ## automatic build
 
-When a pull request containing changes to any `.bas` file is merged, the GitHub Action in `.github/workflows/build-prg.yml` automatically:
+When a pull request that changes any `.bas` file is merged (or a `v*` tag is pushed), the GitHub Action in `.github/workflows/build-prg.yml`:
 
-- copies the repo’s `tools/petcat` executable into the action runner  
-- runs `petcat` to generate the `.prg` file  
-- writes the resulting `.prg` file into the `prgs` folder  
-- commits the generated file back to the main branch  
+- runs the repository's `tools/petcat` on each changed `.bas` file
+- writes the resulting `.prg` files to `prgs/`
+- commits them to `main`, naming the pull request or tag in the commit message
 
-This keeps the PRG output synchronized with the BASIC source without installing the full VICE package.
+This keeps the PRGs in sync with the BASIC source without installing the full VICE package.
 
 ## license
 

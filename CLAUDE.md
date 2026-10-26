@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Program architecture (`2up11.bas`)
 
-The source is tightened: no `rem`s, statements joined. The full explanation, including the variable table, is in `docs/design.md`; keep it in sync with code changes. The untightened original is tagged `v0.9`. Free memory after quitting is about **2209 bytes** (2026-10-25, after the first tightening pass; it was 27 before); `docs/design.md` has the history. Measure with `?fre(0)`, since estimates run low.
+The source is tightened: no `rem`s, statements joined. The full explanation, including the variable table, is in `docs/design.md`; keep it in sync with code changes. The untightened original is tagged `v0.9`. Free memory after quitting is about **2170 bytes** (2026-10-25, after the double border; it was 27 before the first tightening pass); `docs/design.md` has the history. Measure with `?fre(0)`, since estimates run low.
 
 - **Flow:** 100 init (dims, seed `rnd(-ti)`) → 200 new game (clear grid, score 0, full draw 5000, spawn a tile 36500) → main loop 300-470: wait for a key, `x=fre(0)` (forces garbage collection once per key), dispatch `r` redraw, `%` debug dump of the grid, `n` new game, `q` quit, and `w`/`a`/`s`/`d` (400-440 set the direction, 450 runs the move). A move that changed the board (`dm=1`) redraws the tiles (32000), spawns a tile (36500) and shows the score (39000); one that didn't adds its bit to `mt` (460).
 - **Grid:** `gt%(0..15)`, row-major 4x4, fixed size (loops run `0to3`/`0to15`). A cell holds the tile's power (1 = 2, 2 = 4, … up to 20), 0 = empty. Line 910 turns a power into its screen code with a formula (`1`-`9`, `0`, reversed `1`-`9`, reversed `0`).
@@ -42,7 +42,7 @@ The source is tightened: no `rem`s, statements joined. The full explanation, inc
 - **Merge flag:** a merged tile gets `+65` in the grid. The tile draw (32000) sees `p>64`, subtracts 64 and draws the tile blue (color 6); so `+65` then `-64` is the increment to the next power, plus a one-draw highlight. A new tile is drawn red.
 - **Game over (460):** `mt` collects a bit per direction that didn't move the board (`m`: w 1, a 2, s 4, d 8) and resets after a move that did. `mt=15` can only happen on a full board with no merges, so it prints "game over"; the program keeps running, and `n` starts a new game.
 - **Score:** `ss`, raised on each merge by `2^(p+1)` (the merged tile's value, as in 2048), printed on the `score:` row by 39000.
-- **Screen:** title 38000 (with the key help), green border 31000 (box glyphs as `{$xx}` literals), tiles poked by 900 into screen RAM at `7930+x+18*int(x/4)` with color RAM at `+30720`.
+- **Screen:** title 38000 (with the key help), green double border 31000 (8x8 at `tab(7)`, rows 9-16, box glyphs as `{$xx}` literals), tiles poked by 900 into screen RAM at `7931+x+18*int(x/4)` (rows 11-14, columns 9-12) with color RAM at `+30720`.
 - Subroutines live at fixed line-number blocks; keep new routines in their own blocks.
 
 ## Coding guidelines

@@ -57,3 +57,6 @@ Desktop.ini
 *.tar
 *.gz
 *.7z
+
+# scratch xvic screenshots (move keepers up to screenshots/)
+screenshots/temp/

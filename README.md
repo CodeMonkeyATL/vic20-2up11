@@ -10,7 +10,7 @@ This repository contains the current version of the BASIC source and an automate
 - runs on an unexpanded VIC-20  
 - 4x4 grid adapted from 2048-style gameplay  
 - Tiles represent powers of 2 and are displayed using PETSCII characters. The visual progression follows the VIC‑20 screen code sequence (1‑9, 0, inverted 1‑9, 0), giving each power a distinct appearance.  
-- supports directional movement, tile merging, and score tracking  
+- supports directional movement, tile merging, score tracking and a game timer  
 - a new random board every run (seeded from the VIC's clock)  
 - a double border whose inner wall lights up to show each move's result, and a queue of the keys you've typed ahead  
 - sound effects: a quiet slide, a coin ding for every merge (higher for bigger tiles, so you can hear how many merged), a chime for 2048 and up, a woosh when nothing can move, and a game over tone  
@@ -30,9 +30,11 @@ After each move, a new tile appears in an empty space, drawn in red: a 2 (90% of
 The game ends when no moves are possible. 
 The board must have at least one empty space or at least one adjacent pair of matching tiles. 
 If neither condition is true, the game is over. 
-The game shows GAME OVER at the right end of the score row once the board is full and you've tried all four directions without anything moving.
+The game shows GAME OVER! under the board once the board is full and you've tried all four directions without anything moving.
 
 **Wall colors:** the inner wall on the side you move toward turns blue while the move runs. It turns back to green if the tiles moved, or red if nothing could move. A red wall stays red until a move works, so at game over all four inner walls are red.
+
+**Game timer:** the rows under the title show your score and how long the current game has taken (`TIME: mm:ss`). The timer stops at game over and starts again from 00:00 with a new game.
 
 **Key queue:** you can type moves ahead while the VIC is still working. They show under the board: the move in progress first, in green, then the keys waiting their turn, oldest first.
 

@@ -358,7 +358,7 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | line | routine |
 |---|---|
 | 100–120 | init: hot variables first, dims, seed, volume 15, the `sa%` and `cd%` tables |
-| 200 | new game: clear the grid and score, start the timer, full draw, first tile |
+| 200 | new game: clear the grid and score, start the timer, full draw, first tile, then empty the keyboard buffer (`poke198,0`) so keys pressed while the game loads or draws aren't taken as moves |
 | 300–480 | main loop: key wait (with the timer), dispatch, move, wall colors, sound, game over |
 | 600 | sound sweep: register `v` from `f` to `e` by `s`, then off and volume back to 15 |
 | 610 | 2048 chime (4 rising notes) |

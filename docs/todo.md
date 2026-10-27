@@ -2,10 +2,6 @@
 
 Known issues and ideas, found while bringing the repo's tooling in line with vic20-ringsort (2026-10-25). Nothing here is scheduled; pick what's worth doing.
 
-## bugs
-
-- **Stray keys after drag-and-drop (investigate):** after downloading the PRG and dragging it onto xvic, the game started with keys already waiting in the keyboard buffer: the key queue on row 16 showed `FRE(0)M`, from text like `x=fre(0)`. It happened several times, not once. Find where the keys come from (xvic's autostart, a keybuf left by our build tools, or the program itself) and whether a real VIC could ever see it.
-
 ## memory
 
 - **About 580 bytes free** after quitting, after the screen layout and game timer (887 after the speed pass; it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Plenty of room left.

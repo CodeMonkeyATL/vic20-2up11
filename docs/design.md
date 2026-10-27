@@ -121,7 +121,7 @@ The seed is `rnd(-ti)` at startup, so every run deals differently.
 
 The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`db`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=dbormt`). A new game or a redraw also resets `mt`.
 
-When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" at the right end of the score row (reverse red, columns 13–21; `tab` can't be used there, see the cheatsheet). It gets there with `{home}`, 4 `{down}`s and 9 `{left}`s: `{left}` at column 0 wraps to the end of the row above, so this is 3 bytes shorter than 13 `{right}`s and resets `mt`. The score fits to its left up to 6 digits. The program keeps running: `n` starts a new game, `q` quits.
+When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" at the right end of the score row (reverse red, columns 13–21; `tab` can't be used there, because it counts from the start of the logical line and the title rows are linked into one). It gets there with `{home}`, 4 `{down}`s and 9 `{left}`s: `{left}` at column 0 wraps to the end of the row above, so this is 3 bytes shorter than 13 `{right}`s and resets `mt`. The score fits to its left up to 6 digits. The program keeps running: `n` starts a new game, `q` quits.
 
 ## move indicator (wall colors)
 
@@ -186,7 +186,7 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 
 ## sound
 
-**How the VIC makes sound** (see the cheatsheet for details): three square-wave voices, low (36874), middle (36875) and high (36876), plus noise (36877). A voice plays while its register holds 128–255 (higher = higher pitch) and is silent at 0. 36878 is the volume (0–15) for all of them. Line 105 sets the volume to 15 and quitting (340) sets it to 0, so no note is left playing. There are no envelopes or timers: each sound is a BASIC loop, and the game waits while it runs.
+**How the VIC makes sound:** three square-wave voices, low (36874), middle (36875) and high (36876), plus noise (36877). A voice plays while its register holds 128–255 (higher = higher pitch) and is silent at 0. 36878 is the volume (0–15) for all of them. Line 105 sets the volume to 15 and quitting (340) sets it to 0, so no note is left playing. There are no envelopes or timers: each sound is a BASIC loop, and the game waits while it runs.
 
 **Sweep routine (600):** `fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return` steps register `v` from `f` to `e` by `s`, turns it off, and restores the volume (so a volume fade needs no restore of its own). Same as RingSort's 5000.
 
@@ -206,7 +206,7 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 
 ## key queue
 
-Keys pressed during a move wait in the KERNAL keyboard buffer (see the cheatsheet: count at 198, keys at 631–640). Row 18 under the board, columns 7–16 (screen 8083, color RAM 38803), shows them: the key being worked on in **green** in the first cell, then the waiting keys in blue, oldest first.
+Keys pressed during a move wait in the KERNAL keyboard buffer (count at 198, keys at 631–640). Row 18 under the board, columns 7–16 (screen 8083, color RAM 38803), shows them: the key being worked on in **green** in the first cell, then the waiting keys in blue, oldest first.
 
 ```
 965 poke8083,asc(a$)and63:poke38803,5:o=1:goto975

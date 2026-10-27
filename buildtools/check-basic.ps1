@@ -3,7 +3,7 @@ param(
     [string]$BasFile
 )
 
-# checks a petcat source file against docs/basic-guidelines.md and prints warnings;
+# checks a petcat source file against the BASIC guidelines (meta repo, docs/basic-guidelines.md) and prints warnings;
 # it never fails the build, so it always exits 0
 $maxListed = 88
 

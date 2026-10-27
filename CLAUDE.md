@@ -13,9 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `petcat.exe` and `xvic.exe` must be on PATH (VICE 3.10 GTK3). Copies of petcat/c1541 are also in `tools/`.
   - The local build is byte-identical to the CI build, so building locally leaves `prgs/2up11` unchanged unless the source changed. Don't commit locally built PRGs; CI builds them.
 - **See the screen:** `powershell -NoProfile -ExecutionPolicy Bypass -File buildtools/screenshot.ps1` saves a PNG to `screenshots/temp/` (gitignored). The `/screenshot` skill wraps this. Pass `-OutFile` only as an absolute path.
-- **Press keys:** `powershell -NoProfile -ExecutionPolicy Bypass -File buildtools/keys.ps1 -Keys "<keys>"` types into the running program through the monitor's `keybuf` command. `keybuf` types its argument literally; `\n` types Return and `\xNN` any character (`\x93` clears the screen). Example: after `q`, `-Keys "\x93?fre(0)\n"` prints free memory on a clean screen.
-- **Remote monitor:** talk to xvic only through these scripts (`build-and-run.ps1` autostart, `screenshot.ps1`, `keys.ps1`). Never send `x`, and always read the reply before disconnecting; otherwise the remote monitor wedges. Send one command per connection: `keybuf` and `autostart` written together wedged it.
-- **Autostart replays keys:** `autostart` into a running xvic types the last monitor `keybuf` string again right after `RUN`, which makes tests show moves that were never sent. `build-and-run.ps1` sets the string to a single `z` before autostarting; 2up11 ignores `z`. Real keypresses are never replayed.
+- **Press keys:** `powershell -NoProfile -ExecutionPolicy Bypass -File buildtools/keys.ps1 -Keys "<keys>"` types into the running program through the monitor's `keybuf` command. Example: after `q`, `-Keys "\x93?fre(0)\n"` prints free memory on a clean screen.
+- **Remote monitor and autostart:** the rules for driving xvic safely (never send `x`, one command per connection, autostart replaying the last `keybuf` string, escape syntax) are in `meta/claude/xvic.md`, loaded through the workspace CLAUDE.md. The stray `z` that `build-and-run.ps1` leaves for autostart is harmless here: 2up11 ignores `z`.
 - **Lint:** `buildtools/check-basic.ps1 -BasFile <file>` checks a source file against the guidelines: missing `goto`/`gosub`/`then` targets, lines over 88 characters as listed, spaces outside strings and `rem`s, and line numbers that are unnumbered, duplicated or out of order. `build-and-run.ps1` runs it before petcat; it only prints warnings and never stops the build. `2up11.bas` should stay at 0 warnings.
 - There are no automated tests. Verify changes by building and looking at the emulator screen; `docs/design.md` ("testing") has direct-mode lines that set up test boards (many merges with a 2048, a stuck board, every tile character, the move routine alone).
 - **IDE tasks:** the user works in Visual Studio (Open Folder). VS reads only `.vs/tasks.vs.json`, which is gitignored; `buildtools/tasks.vs.json` is the committed copy (and `buildtools/tasks.json` is the VS Code equivalent). Keep the copies in sync. Every VS Build prints a harmless "The system cannot find the file specified." that comes from VS itself, not the script.
@@ -28,9 +27,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Docs
 
 - `docs/design.md`: how `2up11.bas` works. Keep it in sync with code changes.
-- `docs/cheatsheet.md`: general VIC-20 reference (petcat tokens, colors, graphics glyphs, color and sound registers, sound patterns). It's shared with the other CodeMonkeyATL repos (copied from vic20-ringsort, where its test programs live), so keep it free of 2up11 specifics; those go in `design.md`.
-- `docs/basic-guidelines.md`: the coding rules, also shared (included below).
-- `docs/todo.md`: known issues and ideas; the user decides what gets done.
+- `docs/todo.md`: known issues and ideas; the user decides what gets done. Cross-repo plans are in `meta/ideas.md`.
+- The general VIC-20 reference (petcat tokens, colors, glyphs, registers, keyboard buffer) is the user's cheatsheet in the `meta` repo, `meta/docs/cheatsheet.md`; general facts learned here go there, 2up11 specifics in `design.md`.
 
 ## Program architecture (`2up11.bas`)
 
@@ -51,11 +49,4 @@ The source is tightened: no `rem`s, statements joined. The full explanation, inc
 
 ## Coding guidelines
 
-Follow these for all BASIC written in this repo:
-
-@docs/basic-guidelines.md
-
-## petcat and xvic notes
-
-- petcat auto-numbers unnumbered source lines (previous line + 2). So they end up in the PRG, and they need a numbering gap after the preceding line. Lowercase in the source becomes unshifted PETSCII (displayed as uppercase on the VIC).
-- In xvic, `-keymap 0` (symbolic) makes PC keys type their printed symbols. Under the positional keymap, `=` is on Page Down.
+Follow the BASIC coding rules in the private `meta` repo (`meta/docs/basic-guidelines.md`). The workspace CLAUDE.md one folder up imports them, along with the xvic and petcat notes (`meta/claude/xvic.md`).

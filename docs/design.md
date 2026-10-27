@@ -428,7 +428,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | direction variables renamed (`dc`, `dl`, `ds`, `db`, `mv`) | 1602 | 1779 |
 | sound effects | 2010 | 1299 |
 | speed pass | 2299 | 887 |
-| screen layout (stats on row 3, help at the bottom), game timer | 2567 | 605 |
+| screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
 
 The first tightening pass:
 

@@ -57,7 +57,7 @@ Progress is also visible directly on the board through the tile progression.
 
 The game works on real hardware, including VIC 20 units with standard keyboards and video output. 
 It also works in VICE using the xvic emulator. 
-It runs should run correctly on the MiSTer VIC 20 core and on SD2IEC, Pi1541, and other modern storage devices that support PRG loading, but it has not been tested.
+It should run correctly on the MiSTer VIC 20 core and on SD2IEC, Pi1541, and other modern storage devices that support PRG loading, but it has not been tested.
 
 The game is written entirely in BASIC V2 and fits within the memory constraints of an unexpanded machine.
 

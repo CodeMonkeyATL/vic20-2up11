@@ -2,7 +2,7 @@
 105 dimt%(4),gt%(15),mz%(7),sa%(15),cd%(20):r=rnd(-ti):poke36878,15
 110 fori=0to15:sa%(i)=7887+i+18*int(i/4):next
 120 fori=0to20:cd%(i)=48+i-10*int(i/10)-128*(i>10)+16*(i=0):next
-200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:tb=ti:te=0:tg=0:gosub5000:gosub36500
+200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:tb=ti:te=0:tg=0:gosub5000:gosub36500:poke198,0
 
 300 geta$:ifa$=""thengosub6100:goto300
 310 x=fre(0):ifa$="r"thenmt=0:gosub5000:goto300

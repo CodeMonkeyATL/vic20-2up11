@@ -1,24 +1,25 @@
 100 i=0:p=0:j=0:x=0:y=0:lv=0:lm=0:ds=0:sc=0:co=30720
 105 dimt%(4),gt%(15),mz%(7),sa%(15),cd%(20):r=rnd(-ti):poke36878,15
-110 fori=0to15:sa%(i)=7931+i+18*int(i/4):next
+110 fori=0to15:sa%(i)=7887+i+18*int(i/4):next
 120 fori=0to20:cd%(i)=48+i-10*int(i/10)-128*(i>10)+16*(i=0):next
-200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:gosub5000:gosub36500
+200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:tb=ti:te=0:tg=0:gosub5000:gosub36500
 
-300 geta$:ifa$=""then300
+300 geta$:ifa$=""thengosub6100:goto300
 310 x=fre(0):ifa$="r"thenmt=0:gosub5000:goto300
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200
 340 ifa$="q"thenpoke36878,0:print"{blu}":end
-400 ifa$="w"thendc=0:dl=1:ds=4:db=1:wa=38629:ws=1:goto450
-410 ifa$="a"thendc=0:dl=4:ds=1:db=2:wa=38650:ws=22:goto450
-420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38739:ws=1:goto450
-430 ifa$<>"d"then300
-440 dc=3:dl=4:ds=-1:db=8:wa=38655:ws=22
+400 ifa$="w"thendc=0:dl=1:ds=4:db=1:wa=38585:ws=1:goto450
+410 ifa$="a"thendc=0:dl=4:ds=1:db=2:wa=38606:ws=22:goto450
+420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38695:ws=1:goto450
+430 ifa$<>"d"thengosub970:goto300
+440 dc=3:dl=4:ds=-1:db=8:wa=38611:ws=22
 450 wc=6:gosub950:gosub965:gosub1100:gosub1000:ifmv=0then465
 455 wc=5:gosub950:ifmtthenmt=0:gosub960
 460 gosub965:gosub620:gosub36500:gosub39000:gosub970:goto300
 465 wc=2:gosub950:gosub970:mt=dbormt:gosub660
-470 ifmt=15thenprint"{home}{down}{down}{down}{down}{left}{left}{left}{left}{left}{left}{left}{left}{left}{reverse on}{red}game over":mt=0:gosub670
+470 ifmt<15then300
+475 gosub6100:tg=1:print"{home}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}"tab(6)"{reverse on}{red}game over!":mt=0:gosub670
 480 goto300
 600 fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return
 610 v=36876:fori=1to4:pokev,195+i*12:forj=1to99:next:next:pokev,0:return
@@ -33,12 +34,12 @@
 900 y=sa%(x):pokey,cd%(p):pokey+co,sc:return
 
 950 fori=0to3:pokewa+i*ws,wc:next:return
-960 fori=0to3:pokei+38629,5:pokei+38739,5:poke22*i+38650,5:poke22*i+38655,5:next:return
-965 poke8083,asc(a$)and63:poke38803,5:o=1:goto975
-970 poke38803,6
+960 fori=0to3:pokei+38585,5:pokei+38695,5:poke22*i+38606,5:poke22*i+38611,5:next:return
+965 poke8039,asc(a$)and63:poke38759,5:o=1:goto975
+970 poke38759,6
 975 q=peek(198)+o:qe=q:ifql>qethenqe=ql
 980 ql=q:fori=otoqe-1:c=32:ifi<qthenc=peek(631+i-o)and63
-985 poke8083+i,c:next:o=0:return
+985 poke8039+i,c:next:o=0:return
 
 1000 mv=0:mn=0:forr=0to3:c=dc+r*dl:x=c:fori=0to3:t%(i)=gt%(x):x=x+ds:next:j=0:lv=0:lm=0
 1010 fori=0to3:p=t%(i):ifp=0then1040
@@ -50,10 +51,19 @@
 1060 ifgt%(x)<>porscthengt%(x)=p:y=sa%(x):pokey,cd%(p):pokey+co,sc
 1065 x=x+ds:next
 1070 next:return
-1100 fori=38651to38717step22:pokei,0:pokei+1,0:pokei+2,0:pokei+3,0:next:return
+1100 fori=38607to38673step22:pokei,0:pokei+1,0:pokei+2,0:pokei+3,0:next:return
 
-5000 gosub38000:gosub31000:gosub32000:ql=0:fori=38804to38812:pokei,6:next:goto39000
-31000 print"{grn}{$04}";:printtab(7)"{$b0}{$60}{$b2}{$b2}{$b2}{$b2}{$60}{$ae}"
+5000 gosub38000:w=te:gosub6130:gosub31000:gosub38100:gosub32000
+5010 ql=0:fori=38760to38768:pokei,6:next:return
+
+6000 fori=1to2:c=int(w/10):pokey,48+w-10*c:w=c:y=y-1:next:return
+
+6100 iftgthenreturn
+6110 w=int((ti-tb)/60):ifw<0orw>5999thenw=5999:tg=1
+6120 ifw=tethenreturn
+6130 te=w:y=7779:j=int(w/60):w=w-60*j:gosub6000:w=j:y=y-1:goto6000
+
+31000 print"{down}{down}{grn}{$04}";:printtab(7)"{$b0}{$60}{$b2}{$b2}{$b2}{$b2}{$60}{$ae}"
 31010 printtab(7)"{$7d}{$b0}{$b1}{$b1}{$b1}{$b1}{$ae}{$7d}":fori=0to3:printtab(7)"{$ab}{$b3}    {$ab}{$b3}":next
 31020 printtab(7)"{$7d}{$ad}{$b2}{$b2}{$b2}{$b2}{$bd}{$7d}":printtab(7)"{$ad}{$60}{$b1}{$b1}{$b1}{$b1}{$60}{$bd}":return
 
@@ -63,7 +73,9 @@
 36510 p=1-(rnd(1)>=.9):gt%(x)=p:sc=2:goto900
 
 38000 print"{clr}{reverse on}{blu}                      {red}2^11{blu} by codemonkeyatl{blu}";
-38010 print" {reverse on}{blu}                      {reverse off}":print"{down}{red}wasd{blu}=move"
-38020 print"{red}   n{blu}=new game":print"{red}   r{blu}=redraw":print"{red}   q{blu}=quit":return
+38010 print" {reverse on}{blu}                      score:{reverse off}"ss:print"{reverse on}time:{reverse off}  00:00":return
+
+38100 print"{down}{down}{down}{down}{down} {red}wasd{blu}=move {red}n{blu}=new game"
+38110 print" {red}r{blu}=redraw  {red}q{blu}=quit";:return
 
 39000 print"{home}{down}{down}{down}{reverse on}{blu}score:{reverse off}";ss:return

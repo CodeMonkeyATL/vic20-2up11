@@ -115,13 +115,13 @@ The seed is `rnd(-ti)` at startup, so every run deals differently.
 
 ## scoring
 
-`ss` is the score. Each merge adds the merged tile's value, `2^(p+1)` for two tiles of power `p` (two 4s make an 8 and score 8), as in 2048. 39000 prints it on the `score:` row after every successful move and on every full redraw. A new game resets `ss` to 0.
+`ss` is the score. Each merge adds the merged tile's value, `2^(p+1)` for two tiles of power `p` (two 4s make an 8 and score 8), as in 2048. 39000 prints it on the `score:` row after every successful move; a full redraw prints it with the title (38000). A new game resets `ss` to 0. The score has row 3 to itself, so it can grow to 15 digits (more than BASIC prints before switching to exponent notation).
 
 ## game over detection
 
 The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`db`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=dbormt`). A new game or a redraw also resets `mt`.
 
-When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 prints "game over" at the right end of the score row (reverse red, columns 13–21; `tab` can't be used there, because it counts from the start of the logical line and the title rows are linked into one). It gets there with `{home}`, 4 `{down}`s and 9 `{left}`s: `{left}` at column 0 wraps to the end of the row above, so this is 3 bytes shorter than 13 `{right}`s and resets `mt`. The score fits to its left up to 6 digits. The program keeps running: `n` starts a new game, `q` quits.
+When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 goes on to 475 (otherwise back to 300), which updates the timer one last time (6100), stops it (`tg=1`), prints "game over!" and resets `mt`. The text is reverse red on row 17, halfway between the board (ends on row 14) and the key help (starts on row 20), just under the key queue. It covers columns 6–15, one past the border on each side: 10 characters, since 9 can't center under the 8-wide border. It gets there with `{home}`, 17 `{down}`s and `tab(6)`, which works because row 17 starts its own logical line; the cursor can't be relied on, since a redraw leaves it on row 21 and a score print on row 4. The program keeps running: `n` starts a new game, `q` quits. A redraw after game over clears the text, but the timer stays stopped.
 
 ## move indicator (wall colors)
 
@@ -139,10 +139,10 @@ The colors are poked into color RAM; the glyphs don't change. 400–440 set the 
 
 | key | wall | `wa` (color RAM of the first glyph) | `ws` (step) |
 |---|---|---|---|
-| `w` | top, row 10, columns 9–12 | 38629 | 1 |
-| `a` | left, column 8, rows 11–14 | 38650 | 22 |
-| `s` | bottom, row 15, columns 9–12 | 38739 | 1 |
-| `d` | right, column 13, rows 11–14 | 38655 | 22 |
+| `w` | top, row 8, columns 9–12 | 38585 | 1 |
+| `a` | left, column 8, rows 9–12 | 38606 | 22 |
+| `s` | bottom, row 13, columns 9–12 | 38695 | 1 |
+| `d` | right, column 13, rows 9–12 | 38611 | 22 |
 
 450 colors the wall blue (950 with `wc=6`) and runs the move. A move that changed the board goes to 455, which colors that wall green (950 with `wc=5`) and, only if some walls are red (`mt` non-zero), all four (960). Otherwise 465 colors the wall red (950 with `wc=2`).
 
@@ -152,32 +152,50 @@ A redraw (`r`) or a new game reprints the whole border in green and resets `mt`,
 
 | routine | draws |
 |---|---|
-| 5000 | full redraw: title (38000), border (31000), tiles (32000), queue colors, then the score (39000) |
+| 5000–5010 | full redraw: title, score and `time` label (38000), the timer's digits (6130), border (31000), key help (38100), tiles (32000), queue colors. The top row comes first, so score and time show up together, before the slow board drawing |
 | 32000 | all 16 tiles (only on a full redraw) |
 | 1055–1065 | the tiles of a line that changed, as the move writes it back |
 | 900 | one tile: cell `x`, power `p`, color `sc` (32000 and the new tile) |
 | 1100 | all 16 tile cells' color back to black, at the start of each move |
 | 39000 | the score |
+| 6100–6130 | the timer's digits, when the second changes (see "game timer") |
+
+### screen layout
+
+```
+row  0     blue bar
+row  1     2↑11 BY CODEMONKEYATL          title (38000)
+row  2     blue bar
+row  3     SCORE: 1234                    score (38000; 39000 reprints it)
+row  4     TIME:  12:34                   time label (38000), digits (6130), values aligned at column 7
+rows 7-14  border, columns 7-14           31000; tiles on rows 9-12, columns 9-12
+row 16     key queue, columns 7-16        965-985
+row 17           GAME OVER!               only at game over (475)
+rows 20-21 WASD=MOVE N=NEW GAME           key help (38100), second column at 11
+           R=REDRAW  Q=QUIT
+```
+
+Rows 0–3 are one logical line: row 2 is printed full, so the cursor wraps into row 3 and links it. That's why 39000 reaches the score row with `{home}` and `{down}`s, and why 38000 prints the score right after the bar. Row 4 starts a new logical line; 38000 prints the `time:` label there, and its return leaves the cursor on row 5. The key help is printed after the border, with 5 `{down}`s from row 15. Row 22 is left blank, so nothing scrolls.
 
 ### border drawing
 
-31000 prints a double box in green, 8×8 characters at `tab(7)` (columns 7–14, centered on the 22-column screen), rows 9–16. It uses the square box glyphs and the horizontal line as `{$xx}` codes in string literals:
+31000 prints a double box in green, 8×8 characters at `tab(7)` (columns 7–14, centered on the 22-column screen), rows 7–14. It uses the square box glyphs and the horizontal line as `{$xx}` codes in string literals:
 
 ```
-row  9   b0 60 b2 b2 b2 b2 60 ae     outer top
-row 10   7d b0 b1 b1 b1 b1 ae 7d     inner top
-rows 11-14  ab b3 .. .. .. .. ab b3  sides; the 4x4 tiles go in the gap
-row 15   7d ad b2 b2 b2 b2 bd 7d     inner bottom
-row 16   ad 60 b1 b1 b1 b1 60 bd     outer bottom
+row  7   b0 60 b2 b2 b2 b2 60 ae     outer top
+row  8   7d b0 b1 b1 b1 b1 ae 7d     inner top
+rows 9-12  ab b3 .. .. .. .. ab b3   sides; the 4x4 tiles go in the gap
+row 13   7d ad b2 b2 b2 b2 bd 7d     inner bottom
+row 14   ad 60 b1 b1 b1 b1 60 bd     outer bottom
 ```
 
-┌ `b0`, ┐ `ae`, └ `ad`, ┘ `bd`, ─ `60`, │ `7d`, tees `b1`/`b2`/`b3`/`ab`. The tees of the outer and inner boxes face each other, so each grid row and column gets a rung between the two walls. The first `print` has no `{down}`: it starts on the row right after the key help, which puts the tiles on rows 11–14. The "inner wall" is the four tee glyphs beside each side of the grid (row 10, row 15, column 8 and column 13 next to the tiles).
+┌ `b0`, ┐ `ae`, └ `ad`, ┘ `bd`, ─ `60`, │ `7d`, tees `b1`/`b2`/`b3`/`ab`. The tees of the outer and inner boxes face each other, so each grid row and column gets a rung between the two walls. The first `print` starts with 2 `{down}`s: 38000 leaves the cursor on row 5, so the border starts on row 7 and the tiles are on rows 9–12. The "inner wall" is the four tee glyphs beside each side of the grid (row 8, row 13, column 8 and column 13 next to the tiles).
 
 ### tile drawing
 
 Tiles are poked straight into screen memory, inside the border. Two tables, filled once at startup, avoid recomputing anything per tile:
 
-- `sa%(x)` (line 110): the screen address of cell `x`, `7931 + x + 18*int(x/4)`. That's screen memory (7680) + row 11 × 22 + column 9, plus 22 per grid row and 1 per column: `x + 18*int(x/4)` is `row*22 + col` for `x = row*4 + col`.
+- `sa%(x)` (line 110): the screen address of cell `x`, `7887 + x + 18*int(x/4)`. That's screen memory (7680) + row 9 × 22 + column 9, plus 22 per grid row and 1 per column: `x + 18*int(x/4)` is `row*22 + col` for `x = row*4 + col`.
 - `cd%(p)` (line 120): the screen code for power `p` (see "tile encoding").
 
 The color goes to the address + 30720 in color RAM (the variable `co`, so the 5-digit number isn't parsed on every poke). Within a changed line, 1060 skips a cell whose power didn't change and that didn't just merge: 1100 already turned it black, and its character is still right.
@@ -206,14 +224,14 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 
 ## key queue
 
-Keys pressed during a move wait in the KERNAL keyboard buffer (count at 198, keys at 631–640). Row 18 under the board, columns 7–16 (screen 8083, color RAM 38803), shows them: the key being worked on in **green** in the first cell, then the waiting keys in blue, oldest first.
+Keys pressed during a move wait in the KERNAL keyboard buffer (count at 198, keys at 631–640). Row 16 under the board, columns 7–16 (screen 8039, color RAM 38759), shows them: the key being worked on in **green** in the first cell, then the waiting keys in blue, oldest first.
 
 ```
-965 poke8083,asc(a$)and63:poke38803,5:o=1:goto975
-970 poke38803,6
+965 poke8039,asc(a$)and63:poke38759,5:o=1:goto975
+970 poke38759,6
 975 q=peek(198)+o:qe=q:ifql>qethenqe=ql
 980 ql=q:fori=otoqe-1:c=32:ifi<qthenc=peek(631+i-o)and63
-985 poke8083+i,c:next:o=0:return
+985 poke8039+i,c:next:o=0:return
 ```
 
 965 puts the active key (`a$`, already taken by `get`) in the first cell in green and sets the offset `o=1`, so the waiting keys start in the second cell. Called as `gosub970` (with `o=0`, which 985 restores), the first cell turns blue again and the waiting keys start there. `and63` turns a PETSCII letter (65–90) into its screen code (1–26); digits and space are the same in both. It only peeks, so the keys stay queued for `get`.
@@ -225,6 +243,7 @@ Keys pressed during a move wait in the KERNAL keyboard buffer (count at 198, key
 | a move starts (450) | 965 | the active key, then the waiting keys |
 | the move is done (460, before the sound, new tile and score) | 965 | the same, plus keys typed during the move |
 | the move is complete (end of 460, or 465 for a move that changed nothing) | 970 | only the waiting keys: the active key leaves the queue |
+| a key that isn't handled is taken (430) | 970 | the keys still waiting, so an ignored key leaves the queue at once |
 
 So the leftmost green key is always the move in progress, and it only disappears once that move is completely done.
 
@@ -234,7 +253,7 @@ So the leftmost green key is always the move in progress, and it only disappears
 300–480
 ```
 
-300 waits for a key. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
+300 waits for a key, updating the timer (6100) on every pass without one. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
 
 - redraw: r  
 - debug dump: % (prints each cell's index and power)  
@@ -251,21 +270,29 @@ After a move that changed the board (`mv=1`, lines 455–460):
 - the score is shown (39000)
 - the active key leaves the queue (970)
 
-Otherwise 465 colors the wall red, takes the active key off the queue (970), records the failed direction and plays the no-move woosh (660), and 470 checks for game over (playing the game over tone, 670).
+Otherwise 465 colors the wall red, takes the active key off the queue (970), records the failed direction and plays the no-move woosh (660), and 470 checks for game over (475: timer stopped, the text, the game over tone 670).
 
-## title screen
+## title and key help
 
-The title screen is drawn by:
+38000 clears the screen and prints the title bar (reverse blue, `2↑11` in red), then the score on row 3 and the reversed `time:` label with a placeholder `00:00` on row 4 (see "screen layout"). After moves, 39000 reprints just the score. 38100, called after the border, prints the key help on rows 20–21: keys in red, their meaning in blue, the second column at column 11 (column 12 counting from 1).
+
+## game timer
+
+The timer shows the minutes and seconds since the game started, as `mm:ss` on row 4, columns 7–11, under the score's digits (`time:` label at 0–4). It's RingSort's timer (6000–6200 there), adapted:
 
 ```
-gosub 38000
+6000 fori=1to2:c=int(w/10):pokey,48+w-10*c:w=c:y=y-1:next:return
+6100 iftgthenreturn
+6110 w=int((ti-tb)/60):ifw<0orw>5999thenw=5999:tg=1
+6120 ifw=tethenreturn
+6130 te=w:y=7779:j=int(w/60):w=w-60*j:gosub6000:w=j:y=y-1:goto6000
 ```
 
-It clears the screen and uses reverse-video PETSCII and color codes to display:
-
-- game title  
-- author  
-- control instructions  
+- **Start:** 200 sets `tb=ti` (jiffies at the start of the game), `te=0` and `tg=0`.
+- **Ticking:** the key wait (300) calls 6100 on every pass without a key. 6120 returns unless the second has changed, so most calls only compute `w`. During a move nothing calls it, so the display catches up after the move; the elapsed time is still right, since it comes from `ti`.
+- **Drawing:** 6130 pokes the seconds, skips the colon, then the minutes, right to left from column 11 (screen 7779). 6000 writes `w` as two digits at `y` going left. Their color is the blue the placeholder `00:00` was printed in.
+- **Stopping:** at game over (475) the timer is updated once more and frozen with `tg=1`. It also freezes at 99:59 (`w>5999`), or if `ti` wraps at midnight (`w<0`).
+- **Redraw:** 5000 draws the stored time with `w=te:gosub6130` right after the top row, so a redraw shows the right time even when the timer is frozen, and a new game shows `00:00`.
 
 ## testing
 
@@ -315,7 +342,7 @@ This moves row 0 right and prints `0 0 2 3 1 12 2`: two merges (powers 1→2 and
 **Timing a move** (in jiffies, 1/60 s; see "speed"). This runs the same routines as a successful `d` move on a board where every line slides:
 
 ```
-a$="d":dc=3:dl=4:ds=-1:wa=38655:ws=22:wc=6
+a$="d":dc=3:dl=4:ds=-1:wa=38611:ws=22:wc=6
 fori=0to15:gt%(i)=(i*5+1)and3:next:gosub5000
 t0=ti:gosub950:gosub965:gosub1100:gosub1000:wc=5:gosub950:t1=ti
 t2=ti:gosub965:gosub620:gosub36500:gosub39000:gosub970:t3=ti
@@ -331,8 +358,8 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | line | routine |
 |---|---|
 | 100–120 | init: hot variables first, dims, seed, volume 15, the `sa%` and `cd%` tables |
-| 200 | new game: clear the grid and score, full draw, first tile |
-| 300–480 | main loop: key wait, dispatch, move, wall colors, sound, game over |
+| 200 | new game: clear the grid and score, start the timer, full draw, first tile |
+| 300–480 | main loop: key wait (with the timer), dispatch, move, wall colors, sound, game over |
 | 600 | sound sweep: register `v` from `f` to `e` by `s`, then off and volume back to 15 |
 | 610 | 2048 chime (4 rising notes) |
 | 620–650 | move sound: the quiet slide, or one coin ding per merge (with the chime after a 2048 or bigger) |
@@ -345,11 +372,15 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | 970–985 | show the waiting keys under the board (only the cells in use) |
 | 1000–1070 | move all four lines in the direction set by `dc`, `dl`, `ds`, drawing the lines that changed |
 | 1100 | turn all 16 tile cells black |
-| 5000 | full redraw: title, border, tiles, score |
+| 5000–5010 | full redraw: title, score, time, border, key help, tiles, queue colors |
+| 6000 | poke `w` as two digits at `y`, going left |
+| 6100–6120 | timer tick: stop if frozen, compute the seconds, return if unchanged |
+| 6130 | draw the time `w` as `mm:ss` |
 | 31000 | draw the border |
 | 32000 | draw all 16 tiles (full redraw only) |
 | 36500 | spawn a tile in a random empty cell and draw it in red |
-| 38000 | title screen and key help |
+| 38000 | title bar and `time` label |
+| 38100 | key help |
 | 39000 | print the score |
 
 ## variable table
@@ -370,16 +401,18 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | `k`, `n` | ding loop: merge index, first note's pitch |
 | `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step |
 | `r` | line number in 1000; also the seed dummy at startup |
-| `c` | first cell of the current line; also the screen code of a queued key in 970 |
+| `c` | first cell of the current line; also the screen code of a queued key in 970, and the tens in 6000 |
 | `o` | key queue: first cell for the waiting keys (1 while a key is active, else 0) |
 | `i` | loop counter |
 | `x` | cell index (move routine, drawing, spawning, new game loop); also takes `fre(0)` |
 | `p` | a tile's power |
 | `sc` | tile color |
-| `y` | screen address of a tile |
+| `y` | screen address of a tile; also of the next timer digit in 6000 |
 | `co` | 30720, the offset from screen memory to color RAM |
 | `q`, `qe`, `ql` | key queue: end of what to show, end of the loop, end of what was shown last |
 | `ss` | score |
+| `tb`, `te`, `tg` | timer: `ti` at the start of the game, seconds last shown, 1 when stopped (game over or 99:59) |
+| `w` | timer: the seconds, then the minutes, being drawn |
 
 ## memory
 
@@ -395,6 +428,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | direction variables renamed (`dc`, `dl`, `ds`, `db`, `mv`) | 1602 | 1779 |
 | sound effects | 2010 | 1299 |
 | speed pass | 2299 | 887 |
+| screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
 
 The first tightening pass:
 

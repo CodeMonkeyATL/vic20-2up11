@@ -255,7 +255,7 @@ So the leftmost green key is always the move in progress, and it only disappears
 300–480
 ```
 
-300 waits for a key, updating the timer (6100) on every pass without one. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
+300 waits for a key, updating the timer (6100) on every pass, including the one that takes a key. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
 
 - redraw: r  
 - debug dump: % (prints each cell's index and power)  
@@ -292,7 +292,7 @@ The timer shows the minutes and seconds since the game started, as `mm:ss` on ro
 ```
 
 - **Start:** 200 sets `tb=ti` (jiffies at the start of the game), `te=0` and `tg=0`.
-- **Ticking:** the key wait (300) calls 6100 on every pass without a key. 6120 returns unless the second has changed, so most calls only compute `w`. During a move nothing calls it, so the display catches up after the move; the elapsed time is still right, since it comes from `ti`.
+- **Ticking:** the key wait (300) calls 6100 on every pass, before `get`. 6120 returns unless the second has changed, so most calls only compute `w`. During a move nothing calls it, so the display catches up after the move; the elapsed time is still right, since it comes from `ti`. 300 used to call 6100 only on passes without a key, so with moves typed ahead the loop never idled and the display froze until the queue ran dry (seen when Claude fed keys in batches of 10).
 - **Drawing:** 6130 pokes the seconds, skips the colon, then the minutes, right to left from column 11 (screen 7779). 6000 writes `w` as two digits at `y` going left. Their color is the blue the placeholder `00:00` was printed in.
 - **Stopping:** at game over (475) the timer is updated once more and frozen with `tg=1`. It also freezes at 99:59 (`w>5999`), or if `ti` wraps at midnight (`w<0`).
 - **Redraw:** 5000 draws the stored time with `w=te:gosub6130` right after the top row, so a redraw shows the right time even when the timer is frozen, and a new game shows `00:00`.
@@ -434,7 +434,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | sound effects | 2010 | 1299 |
 | speed pass | 2299 | 887 |
 | screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
-| keyboard flush at new game, mute toggle (`m`), `mute` all red while muted | 2682 | 469 |
+| keyboard flush at new game, mute toggle (`m`), `mute` all red while muted, timer ticks with keys queued | 2681 | 470 |
 
 The first tightening pass:
 

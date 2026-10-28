@@ -4,7 +4,7 @@
 120 fori=0to20:cd%(i)=48+i-10*int(i/10)-128*(i>10)+16*(i=0):next
 200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:tb=ti:te=0:tg=0:gosub5000:gosub36500:poke198,0
 
-300 geta$:ifa$=""thengosub6100:goto300
+300 gosub6100:geta$:ifa$=""then300
 310 x=fre(0):ifa$="r"thenmt=0:gosub5000:goto300
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200

@@ -13,7 +13,7 @@ The speed pass (2026-10-25) took a successful move from about 3.2 s to 1.7 s at 
 
 - **Exponent in the score:** `2^(p+1)` in 1020 is slow in BASIC V2 and runs once per merge; a table of powers of 2 (a float array, about 110 bytes) would be faster.
 - **Dispatch:** each key is compared up to 8 times; most keys are moves, so test those first.
-- **Timer in the key wait:** 300 now calls 6100 on every idle pass, which slows the wait loop a little (a few milliseconds per pass). Not measured; only matters if key response ever feels sluggish.
+- **Timer in the key wait:** 300 calls 6100 on every pass (also before each queued key), which slows the wait loop and each move a little (a few milliseconds per pass). Not measured; only matters if key response ever feels sluggish.
 - **The move (1000):** every line is copied into `t%()` and scanned even when it can't change (35 jiffies for a move where nothing moves); a cheaper way to spot unchanged lines would help.
 
 ## repo

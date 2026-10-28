@@ -1,10 +1,10 @@
 100 i=0:p=0:j=0:x=0:y=0:lv=0:lm=0:ds=0:sc=0:co=30720
-105 dimt%(4),gt%(15),mz%(7),sa%(15),cd%(20):r=rnd(-ti):poke36878,15
+105 dimt%(4),gt%(15),mz%(7),sa%(15),cd%(20):r=rnd(-ti):poke36878,15:sn=1
 110 fori=0to15:sa%(i)=7887+i+18*int(i/4):next
 120 fori=0to20:cd%(i)=48+i-10*int(i/10)-128*(i>10)+16*(i=0):next
 200 forx=0to15:gt%(x)=0:next:ss=0:mt=0:tb=ti:te=0:tg=0:gosub5000:gosub36500:poke198,0
 
-300 geta$:ifa$=""thengosub6100:goto300
+300 gosub6100:geta$:ifa$=""then300
 310 x=fre(0):ifa$="r"thenmt=0:gosub5000:goto300
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200
@@ -12,14 +12,15 @@
 400 ifa$="w"thendc=0:dl=1:ds=4:db=1:wa=38585:ws=1:goto450
 410 ifa$="a"thendc=0:dl=4:ds=1:db=2:wa=38606:ws=22:goto450
 420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38695:ws=1:goto450
+425 ifa$="m"thensn=1-sn:gosub38120:gosub970:goto300
 430 ifa$<>"d"thengosub970:goto300
 440 dc=3:dl=4:ds=-1:db=8:wa=38611:ws=22
 450 wc=6:gosub950:gosub965:gosub1100:gosub1000:ifmv=0then465
 455 wc=5:gosub950:ifmtthenmt=0:gosub960
-460 gosub965:gosub620:gosub36500:gosub39000:gosub970:goto300
-465 wc=2:gosub950:gosub970:mt=dbormt:gosub660
+460 gosub965:onsngosub620:gosub36500:gosub39000:gosub970:goto300
+465 wc=2:gosub950:gosub970:mt=dbormt:onsngosub660
 470 ifmt<15then300
-475 gosub6100:tg=1:print"{home}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}"tab(6)"{reverse on}{red}game over!":mt=0:gosub670
+475 gosub6100:tg=1:print"{home}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}"tab(6)"{reverse on}{red}game over!":mt=0:onsngosub670
 480 goto300
 600 fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return
 610 v=36876:fori=1to4:pokev,195+i*12:forj=1to99:next:next:pokev,0:return
@@ -75,7 +76,8 @@
 38000 print"{clr}{reverse on}{blu}                      {red}2^11{blu} by codemonkeyatl{blu}";
 38010 print" {reverse on}{blu}                      score:{reverse off}"ss:print"{reverse on}time:{reverse off}  00:00":return
 
-38100 print"{down}{down}{down}{down}{down} {red}wasd{blu}=move {red}n{blu}=new game"
-38110 print" {red}r{blu}=redraw  {red}q{blu}=quit";:return
+38100 print"{down}{down}{down}{down}{down} {red}wasd{blu}=move {red}n{blu}ew game"
+38110 print" {red}r{blu}edraw    {red}m{blu}ute {red}q{blu}uit";
+38120 fori=38874to38876:pokei,2+4*sn:next:return
 
 39000 print"{home}{down}{down}{down}{reverse on}{blu}score:{reverse off}";ss:return

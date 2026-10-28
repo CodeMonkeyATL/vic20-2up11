@@ -171,8 +171,8 @@ row  4     TIME:  12:34                   time label (38000), digits (6130), val
 rows 7-14  border, columns 7-14           31000; tiles on rows 9-12, columns 9-12
 row 16     key queue, columns 7-16        965-985
 row 17           GAME OVER!               only at game over (475)
-rows 20-21 WASD=MOVE N=NEW GAME           key help (38100), second column at 11
-           R=REDRAW  Q=QUIT
+rows 20-21 WASD=MOVE NEW GAME            key help (38100), second column at 11
+           REDRAW    MUTE QUIT
 ```
 
 Rows 0–3 are one logical line: row 2 is printed full, so the cursor wraps into row 3 and links it. That's why 39000 reaches the score row with `{home}` and `{down}`s, and why 38000 prints the score right after the bar. Row 4 starts a new logical line; 38000 prints the `time:` label there, and its return leaves the cursor on row 5. The key help is printed after the border, with 5 `{down}`s from row 15. Row 22 is left blank, so nothing scrolls.
@@ -210,6 +210,8 @@ Tile colors: black for a settled tile, blue for a tile that just merged, red for
 
 **Where each sound plays:** the move sounds play right after the move (460 calls 620), before the new tile and the score. The merge dings play back to back in an even rhythm, one per merge, so 3 merges sound different from 4 even though the redraw is slow.
 
+**Mute (`m`):** `sn` is 1 with sound on, 0 when muted. The three calls that start a sound (460 → 620, 465 → 660, 475 → 670) are `onsngosub…`: with `sn=0`, `on` falls through to the rest of the line, so the move carries on silently. An `if` wouldn't work there, since a false `if` skips the rest of its line. Line 105 sets `sn=1` once per run, so muting lasts through new games until `m` is pressed again. Muted moves are also quicker, since the sounds are delay loops. The key help shows the state: while muted, all of `mute` is red, not just the `m`. 38120 pokes the color of `ute` (row 21, columns 12–14, color RAM 38874–38876) as `2+4*sn`, red (2) when muted, blue (6) with sound; 425 calls it after the toggle, and 38110 falls through into it, so every full redraw shows the current state.
+
 **Tuning:** Claude can't hear xvic, so the values were tuned by the user's ear (the slide and merge sounds were redone once: the first slide was too loud and the first merge sound was a single chirp). A smaller `s` (fractions work, since `poke` drops them) makes a sweep longer and smoother.
 
 | Sound | Line | Voice | Values |
@@ -243,7 +245,7 @@ Keys pressed during a move wait in the KERNAL keyboard buffer (count at 198, key
 | a move starts (450) | 965 | the active key, then the waiting keys |
 | the move is done (460, before the sound, new tile and score) | 965 | the same, plus keys typed during the move |
 | the move is complete (end of 460, or 465 for a move that changed nothing) | 970 | only the waiting keys: the active key leaves the queue |
-| a key that isn't handled is taken (430) | 970 | the keys still waiting, so an ignored key leaves the queue at once |
+| a key that isn't a move is taken (425 mute, 430 unhandled) | 970 | the keys still waiting, so an ignored key leaves the queue at once |
 
 So the leftmost green key is always the move in progress, and it only disappears once that move is completely done.
 
@@ -253,19 +255,20 @@ So the leftmost green key is always the move in progress, and it only disappears
 300–480
 ```
 
-300 waits for a key, updating the timer (6100) on every pass without one. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
+300 waits for a key, updating the timer (6100) on every pass, including the one that takes a key. 310 forces a garbage collection (`x=fre(0)`, see "memory") and then dispatches:
 
 - redraw: r  
 - debug dump: % (prints each cell's index and power)  
 - new game: n  
 - quit: q  
+- mute: m (425, after w, a and s, since moves are more common): toggles `sn` between 1 and 0 and takes the key off the queue (970)  
 - movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue, shows the key queue (965), turns the tiles black (1100) and runs the move, which draws the lines that changed)
 
 After a move that changed the board (`mv=1`, lines 455–460):
 
 - the wall turns green (950), and all four if some were red (960)
 - the key queue is shown again (965), with any keys pressed during the move
-- the move sound plays (620): the quiet slide, or a coin ding per merge (and the 2048 chime)
+- the move sound plays (620, unless muted): the quiet slide, or a coin ding per merge (and the 2048 chime)
 - a new tile is spawned (36500)
 - the score is shown (39000)
 - the active key leaves the queue (970)
@@ -274,7 +277,7 @@ Otherwise 465 colors the wall red, takes the active key off the queue (970), rec
 
 ## title and key help
 
-38000 clears the screen and prints the title bar (reverse blue, `2↑11` in red), then the score on row 3 and the reversed `time:` label with a placeholder `00:00` on row 4 (see "screen layout"). After moves, 39000 reprints just the score. 38100, called after the border, prints the key help on rows 20–21: keys in red, their meaning in blue, the second column at column 11 (column 12 counting from 1).
+38000 clears the screen and prints the title bar (reverse blue, `2↑11` in red), then the score on row 3 and the reversed `time:` label with a placeholder `00:00` on row 4 (see "screen layout"). After moves, 39000 reprints just the score. 38100, called after the border, prints the key help on rows 20–21: keys in red, their meaning in blue, the second column at column 11 (column 12 counting from 1). Only the moves use `=` (`wasd=move`); the other keys are the red first letter of their word (`new game`, `redraw`, `mute`, `quit`), which makes room for `mute` on row 21 while the longest row still ends at column 19. While muted, all of `mute` is red (38120, see "sound").
 
 ## game timer
 
@@ -289,7 +292,7 @@ The timer shows the minutes and seconds since the game started, as `mm:ss` on ro
 ```
 
 - **Start:** 200 sets `tb=ti` (jiffies at the start of the game), `te=0` and `tg=0`.
-- **Ticking:** the key wait (300) calls 6100 on every pass without a key. 6120 returns unless the second has changed, so most calls only compute `w`. During a move nothing calls it, so the display catches up after the move; the elapsed time is still right, since it comes from `ti`.
+- **Ticking:** the key wait (300) calls 6100 on every pass, before `get`. 6120 returns unless the second has changed, so most calls only compute `w`. During a move nothing calls it, so the display catches up after the move; the elapsed time is still right, since it comes from `ti`. 300 used to call 6100 only on passes without a key, so with moves typed ahead the loop never idled and the display froze until the queue ran dry (seen when Claude fed keys in batches of 10).
 - **Drawing:** 6130 pokes the seconds, skips the colon, then the minutes, right to left from column 11 (screen 7779). 6000 writes `w` as two digits at `y` going left. Their color is the blue the placeholder `00:00` was printed in.
 - **Stopping:** at game over (475) the timer is updated once more and frozen with `tg=1`. It also freezes at 99:59 (`w>5999`), or if `ti` wraps at midnight (`w<0`).
 - **Redraw:** 5000 draws the stored time with `w=te:gosub6130` right after the top row, so a redraw shows the right time even when the timer is frozen, and a new game shows `00:00`.
@@ -345,7 +348,7 @@ This moves row 0 right and prints `0 0 2 3 1 12 2`: two merges (powers 1→2 and
 a$="d":dc=3:dl=4:ds=-1:wa=38611:ws=22:wc=6
 fori=0to15:gt%(i)=(i*5+1)and3:next:gosub5000
 t0=ti:gosub950:gosub965:gosub1100:gosub1000:wc=5:gosub950:t1=ti
-t2=ti:gosub965:gosub620:gosub36500:gosub39000:gosub970:t3=ti
+t2=ti:gosub965:onsngosub620:gosub36500:gosub39000:gosub970:t3=ti
 ?chr$(147)t1-t0+t3-t2
 ```
 
@@ -380,7 +383,8 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | 32000 | draw all 16 tiles (full redraw only) |
 | 36500 | spawn a tile in a random empty cell and draw it in red |
 | 38000 | title bar and `time` label |
-| 38100 | key help |
+| 38100–38110 | key help |
+| 38120 | color of `ute` in `mute`: red while muted, blue with sound |
 | 39000 | print the score |
 
 ## variable table
@@ -400,6 +404,7 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | `mz%(7)`, `mn` | the move's merges: new power of each, and how many (0–8); the dings play from them |
 | `k`, `n` | ding loop: merge index, first note's pitch |
 | `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step |
+| `sn` | sound: 1 on, 0 muted (`m` toggles it) |
 | `r` | line number in 1000; also the seed dummy at startup |
 | `c` | first cell of the current line; also the screen code of a queued key in 970, and the tens in 6000 |
 | `o` | key queue: first cell for the waiting keys (1 while a key is active, else 0) |
@@ -429,6 +434,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | sound effects | 2010 | 1299 |
 | speed pass | 2299 | 887 |
 | screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
+| keyboard flush at new game, mute toggle (`m`), `mute` all red while muted, timer ticks with keys queued | 2681 | 470 |
 
 The first tightening pass:
 

@@ -19,7 +19,6 @@ The speed pass (2026-10-25) took a successful move from about 3.2 s to 1.7 s at 
 ## repo
 
 - No release yet (`v0.9` tags the pre-cleanup state). When the game is finished, tag it `v1` and make a release with the PRG, like RingSort v2 (experimental builds get `v0.x`).
-- No README screenshot of the title screen; the existing screenshots predate the score, the timer and the new layout (2026-10-26).
 
 ## tooling
 

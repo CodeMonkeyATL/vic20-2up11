@@ -13,7 +13,7 @@ This repository contains the current version of the BASIC source and an automate
 - supports directional movement, tile merging, score tracking and a game timer  
 - a new random board every run (seeded from the VIC's clock)  
 - a double border whose inner wall lights up to show each move's result, and a queue of the keys you've typed ahead  
-- sound effects: a quiet slide, a coin ding for every merge (higher for bigger tiles, so you can hear how many merged), a chime for 2048 and up, a woosh when nothing can move, and a game over tone  
+- sound effects: a quiet slide, a coin ding for every merge (higher for bigger tiles, so you can hear how many merged), a chime for 2048 and up, a woosh when nothing can move, and a game over tone; `m` turns them off (MUTE shows all red) and back on  
 - builds automatically through GitHub Actions using a repo-stored petcat executable  
 
 ## how to play
@@ -43,6 +43,7 @@ The game shows GAME OVER! under the board once the board is full and you've trie
 | `w` `a` `s` `d` | move up, left, down, right |
 | `n` | new game |
 | `r` | redraw the screen |
+| `m` | sound off or on (stays off for new games until pressed again) |
 | `q` | quit |
 
 **Score:** each merge adds the value of the new tile (two 4s make an 8 and score 8), as in 2048. The score shows near the top of the screen. 

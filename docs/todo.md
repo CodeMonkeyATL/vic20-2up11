@@ -4,7 +4,7 @@ Known issues and ideas, found while bringing the repo's tooling in line with vic
 
 ## memory
 
-- **About 580 bytes free** after quitting, after the screen layout and game timer (887 after the speed pass; it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Plenty of room left.
+- **About 470 bytes free** after quitting, after the mute toggle (582 after the screen layout and game timer, 887 after the speed pass; it was 27 before the first tightening pass; see `docs/design.md`, "memory"). Plenty of room left.
 - **`x=fre(0)` (line 310):** forces garbage collection once per key (it used to run on every idle pass, as `a=fre(0)`). It was added early on, when screen drawing built a lot of strings. Now almost nothing makes string garbage (only `get a$`), so it can probably go; check that no collection pause shows up in a long game without it.
 
 ## speed

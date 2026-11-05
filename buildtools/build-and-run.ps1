@@ -25,6 +25,14 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
+# a prgs-latest folder next to the repo (opt-in: create it to use it) collects every repo's newest
+# build, so drive 8 holds the launcher and the games side by side; xvic autostarts from there.
+$shared = Join-Path (Split-Path -Parent $root) 'prgs-latest'
+if (Test-Path -PathType Container $shared) {
+    Copy-Item -Force $prg $shared
+    $prg = Join-Path $shared $PrgName
+}
+
 # sends one monitor command and waits for a reply matching $expect; a wedged monitor accepts the connection
 # but never answers, so this returns $false after 2 seconds. Always reads the reply before closing.
 function Send-ViceCommand([string]$command, [string]$expect) {
@@ -65,6 +73,10 @@ function Try-ViceAutostart([string]$prgPath) {
     if (Send-ViceCommand 'keybuf z' '\(C:') {
         Start-Sleep -Milliseconds 300
     }
+    # autostart through the virtual filesystem, so drive 8 is the PRG's folder and a program can
+    # load another one from it (the launcher handoff). Other modes give drive 8 a one-file disk.
+    [void](Send-ViceCommand 'resourceset "AutostartPrgMode" "0"' '\(C:')
+    Start-Sleep -Milliseconds 300
     $unix = $prgPath -replace '\\', '/'
     return Send-ViceCommand "autostart `"$unix`"" 'autostarting'
 }
@@ -81,5 +93,5 @@ if ($stale) {
     $stale | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue
 }
 
-Start-Process xvic.exe -ArgumentList '-memory', 'none', '-keymap', '0', '-remotemonitor', '-autostart', $prg
+Start-Process xvic.exe -ArgumentList '-memory', 'none', '-keymap', '0', '-remotemonitor', '-autostartprgmode', '0', '-autostart', $prg
 Write-Host "Started xvic with remote monitor: $prg"

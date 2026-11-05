@@ -121,7 +121,7 @@ The seed is `rnd(-ti)` at startup, so every run deals differently.
 
 The game doesn't search for possible merges. Instead, `mt` records which directions the player has tried without anything moving, one bit each (`db`: w 1, a 2, s 4, d 8). A move that changes the board resets `mt` to 0; a move that doesn't adds its bit (470, `mt=dbormt`). A new game or a redraw also resets `mt`.
 
-When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 goes on to 475 (otherwise back to 300), which updates the timer one last time (6100), stops it (`tg=1`), prints "game over!" and resets `mt`. The text is reverse red on row 17, halfway between the board (ends on row 14) and the key help (starts on row 20), just under the key queue. It covers columns 6–15, one past the border on each side: 10 characters, since 9 can't center under the 8-wide border. It gets there with `{home}`, 17 `{down}`s and `tab(6)`, which works because row 17 starts its own logical line; the cursor can't be relied on, since a redraw leaves it on row 21 and a score print on row 4. The program keeps running: `n` starts a new game, `q` quits. A redraw after game over clears the text, but the timer stays stopped.
+When `mt=15`, all four directions have failed. That can only happen on a full board with no merges left (with an empty cell, some tile can always slide into it), so 470 goes on to 475 (otherwise back to 300), which updates the timer one last time (6100), stops it (`tg=1`), prints "game over!" and resets `mt`. The text is reverse red on row 17, halfway between the board (ends on row 14) and the key help (starts on row 20), just under the key queue. It covers columns 6–15, one past the border on each side: 10 characters, since 9 can't center under the 8-wide border. It gets there with `{home}`, 17 `{down}`s and `tab(6)`, which works because row 17 starts its own logical line; the cursor can't be relied on, since a redraw leaves it on row 21 and a score print on row 4. The program keeps running: `n` starts a new game, `q` quits. A redraw after game over clears the text, but the timer stays stopped. 476-478 then leave the result for the launcher and, if a launcher is there, print `LEADERBOARD` (red `l`) on row 18 (see "launcher").
 
 ## move indicator (wall colors)
 
@@ -261,6 +261,7 @@ So the leftmost green key is always the move in progress, and it only disappears
 - debug dump: % (prints each cell's index and power)  
 - new game: n  
 - quit: q  
+- launcher: l (345), only if a launcher left its location in the cassette buffer (`peek(841)`); loads it (800, see "launcher")  
 - mute: m (425, after w, a and s, since moves are more common): toggles `sn` between 1 and 0 and takes the key off the queue (970)  
 - movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue, shows the key queue (965), turns the tiles black (1100) and runs the move, which draws the lines that changed)
 
@@ -296,6 +297,25 @@ The timer shows the minutes and seconds since the game started, as `mm:ss` on ro
 - **Drawing:** 6130 pokes the seconds, skips the colon, then the minutes, right to left from column 11 (screen 7779). 6000 writes `w` as two digits at `y` going left. Their color is the blue the placeholder `00:00` was printed in.
 - **Stopping:** at game over (475) the timer is updated once more and frozen with `tg=1`. It also freezes at 99:59 (`w>5999`), or if `ti` wraps at midnight (`w<0`).
 - **Redraw:** 5000 draws the stored time with `w=te:gosub6130` right after the top row, so a redraw shows the right time even when the timer is frozen, and a new game shows `00:00`.
+
+## launcher
+
+2up11 works with the CodeMonkeyATL launcher (`vic20-launcher`), which posts results to the leaderboard. The two talk only through the cassette buffer (828-1019, which a disk `LOAD` leaves alone); 2up11 has no network code. The buffer layout is in `vic20-launcher/docs/design.md`, and the leaderboard's design in the private `meta` repo, `research/leaderboard/README.md`.
+
+**Result at game over (476-478):** the service knows 2up11 as game 1, variant 4 (`4X4`), with two fields: the score and the elapsed seconds.
+
+| Address | Value |
+|---|---|
+| 900, 901 | game 1, check 254 (255 minus the id) |
+| 902, 903 | variant 4, 2 fields |
+| 904-906 | `ss`, 3 bytes, low byte first |
+| 907-908 | `te`, 2 bytes (at most 5999) |
+
+The launcher zeroes 900-918 after reading, and power-on clears it, so 909 and the optional `TI` at 916-918 are left at 0. The score gets all 3 bytes through a loop (`v-256*int(v/256)`), since a good game passes 32767 (the cheap `255ands` form stops there) and could pass 65535. A second game over before the launcher runs replaces the first result; so does the same game over printed again (it can repeat if the player keeps pressing moves).
+
+**`l` loads the launcher (345, 800-820):** offered only when 841 isn't 0, so 2up11 started on its own plays exactly as before (`l` is ignored). It works at any time, not just at game over; mid-game it abandons the game without a result, like `q`. 800 turns the sound off and prints `load"<name>",<device>` on row 2, with the name from 843+ (length at 842) and the device from 841 (`print` adds spaces around the number, which `load` ignores), then `{home}`; 810-820 put Return, `r`, `u`, `n`, Return in the keyboard buffer and `end`. Details of the trick in `vic20-launcher/docs/design.md`, "Starting another program".
+
+**Tested in xvic (2026-11-04),** with drive 8 as the shared `prgs-latest` folder: launcher → `1` → 2up11 → random moves to game over (score 2004, 39:35) → the buffer held `01 FE 04 02 D4 07 00 47 09` → `l` → the launcher showed `/v1/s?g=1&v=4&p=1&a=2004&b=2375` and zeroed the area. `l` mid-game returns to the launcher with nothing to post. Autostarted alone, `l` is ignored and no `LEADERBOARD` appears.
 
 ## testing
 
@@ -362,12 +382,13 @@ Keep the timing on the same line as the work: timing across lines also counts th
 |---|---|
 | 100–120 | init: hot variables first, dims, seed, volume 15, the `sa%` and `cd%` tables |
 | 200 | new game: clear the grid and score, start the timer, full draw, first tile, then empty the keyboard buffer (`poke198,0`) so keys pressed while the game loads or draws aren't taken as moves |
-| 300–480 | main loop: key wait (with the timer), dispatch, move, wall colors, sound, game over |
+| 300–480 | main loop: key wait (with the timer), dispatch, move, wall colors, sound, game over; 476–478 leave the result for the launcher |
 | 600 | sound sweep: register `v` from `f` to `e` by `s`, then off and volume back to 15 |
 | 610 | 2048 chime (4 rising notes) |
 | 620–650 | move sound: the quiet slide, or one coin ding per merge (with the chime after a 2048 or bigger) |
 | 660 | no-move woosh (noise, volume fade) |
 | 670 | game over tone |
+| 800–820 | load the launcher from the location in the cassette buffer (841–899) |
 | 900 | draw one tile: cell `x`, power `p`, color `sc` |
 | 950 | color one inner wall: `wa`, `ws`, color `wc` |
 | 960 | color all four inner walls green |
@@ -403,12 +424,12 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | `j`, `lv`, `lm` | one-pass merge: next free position, last tile that can still merge (0 = none), line changed |
 | `mz%(7)`, `mn` | the move's merges: new power of each, and how many (0–8); the dings play from them |
 | `k`, `n` | ding loop: merge index, first note's pitch |
-| `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step |
+| `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step; `v` also holds the score being split into bytes (477) |
 | `sn` | sound: 1 on, 0 muted (`m` toggles it) |
 | `r` | line number in 1000; also the seed dummy at startup |
 | `c` | first cell of the current line; also the screen code of a queued key in 970, and the tens in 6000 |
 | `o` | key queue: first cell for the waiting keys (1 while a key is active, else 0) |
-| `i` | loop counter |
+| `i` | loop counter; also the address in 477 |
 | `x` | cell index (move routine, drawing, spawning, new game loop); also takes `fre(0)` |
 | `p` | a tile's power |
 | `sc` | tile color |
@@ -435,6 +456,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | speed pass | 2299 | 887 |
 | screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
 | keyboard flush at new game, mute toggle (`m`), `mute` all red while muted, timer ticks with keys queued | 2681 | 470 |
+| result for the launcher at game over, `l` loads the launcher | 2991 | 160 |
 
 The first tightening pass:
 

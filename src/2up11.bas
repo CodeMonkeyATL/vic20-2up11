@@ -22,9 +22,10 @@
 465 wc=2:gosub950:gosub970:mt=dbormt:onsngosub660
 470 ifmt<15then300
 475 gosub6100:tg=1:print"{home}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}"tab(6)"{reverse on}{red}game over!":mt=0:onsngosub670
-476 poke900,1:poke901,254:poke902,4:poke903,2:v=ss
+476 poke900,1:poke901,254:poke902,4:poke903,3:v=ss
 477 fori=904to906:pokei,v-256*int(v/256):v=int(v/256):next
 478 poke907,te-256*int(te/256):poke908,te/256:ifpeek(841)thenprinttab(5)"{red}l{blu}eaderboard"
+479 v=0:forx=0to15:p=gt%(x):v=v-(p>v)*(p-v):next:poke910,v
 480 goto300
 600 fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return
 610 v=36876:fori=1to4:pokev,195+i*12:forj=1to99:next:next:pokev,0:return

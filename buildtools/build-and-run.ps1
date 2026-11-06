@@ -8,11 +8,18 @@ if ([System.IO.Path]::GetExtension($BasFile) -ne '.bas') {
     exit 1
 }
 
+. (Join-Path $PSScriptRoot 'machine.ps1')
+# the file name picks the machine: name-c64.bas is a C64 program, anything else a VIC-20 one
+$machine = Get-MachineForFile $BasFile
+$emulator = $machine.Emulator
+$port = $machine.Port
+
 if (-not $PrgName) {
     $PrgName = [System.IO.Path]::GetFileNameWithoutExtension($BasFile)
 }
 
 $root = Split-Path -Parent $PSScriptRoot
+$reposDir = Split-Path -Parent $root
 $prgs = Join-Path $root 'prgs'
 New-Item -ItemType Directory -Force -Path $prgs | Out-Null
 $prg = Join-Path $prgs $PrgName
@@ -20,14 +27,15 @@ $prg = Join-Path $prgs $PrgName
 # warnings only; the build goes ahead either way
 & (Join-Path $PSScriptRoot 'check-basic.ps1') -BasFile $BasFile
 
-& petcat.exe -w2 -l 1001 -o $prg $BasFile
+& petcat.exe -w2 -l $machine.LoadAddress -o $prg $BasFile
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-# a prgs-latest folder next to the repo (opt-in: create it to use it) collects every repo's newest
-# build, so drive 8 holds the launcher and the games side by side; xvic autostarts from there.
-$shared = Join-Path (Split-Path -Parent $root) 'prgs-latest'
+# a shared folder next to the repo (opt-in: create it to use it) collects every repo's newest build
+# for that machine (prgs-latest for the VIC-20, sd-c64 for the C64), and the emulator autostarts from
+# there, so drive 8 holds the programs side by side and they can load each other.
+$shared = Join-Path $reposDir $machine.Shared
 if (Test-Path -PathType Container $shared) {
     Copy-Item -Force $prg $shared
     $prg = Join-Path $shared $PrgName
@@ -39,7 +47,7 @@ function Send-ViceCommand([string]$command, [string]$expect) {
     $client = $null
     try {
         $client = New-Object System.Net.Sockets.TcpClient
-        $client.Connect('127.0.0.1', 6510)
+        $client.Connect('127.0.0.1', $port)
         $stream = $client.GetStream()
         $bytes = [System.Text.Encoding]::ASCII.GetBytes("$command`n")
         $stream.Write($bytes, 0, $bytes.Length)
@@ -82,16 +90,19 @@ function Try-ViceAutostart([string]$prgPath) {
 }
 
 if (Try-ViceAutostart $prg) {
-    Write-Host "Autostarted in running xvic: $prg"
+    Write-Host "Autostarted in running ${emulator}: $prg"
     exit 0
 }
 
-$stale = Get-Process -Name xvic -ErrorAction SilentlyContinue
+$stale = Get-Process -Name $emulator -ErrorAction SilentlyContinue
 if ($stale) {
-    Write-Host 'xvic remote monitor did not respond on 127.0.0.1:6510; restarting xvic.'
+    Write-Host "$emulator remote monitor did not respond on 127.0.0.1:${port}; restarting $emulator."
     $stale | Stop-Process -Force
     $stale | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue
 }
 
-Start-Process xvic.exe -ArgumentList '-memory', 'none', '-keymap', '0', '-remotemonitor', '-autostartprgmode', '0', '-autostart', $prg
-Write-Host "Started xvic with remote monitor: $prg"
+# each machine's monitor has its own port, so a VIC-20 and a C64 can run side by side
+$arguments = $machine.Args + @('-remotemonitor', '-remotemonitoraddress', "ip4://127.0.0.1:$port") +
+    (Get-NetMockArgs $reposDir) + @('-autostartprgmode', '0', '-autostart', $prg)
+Start-Process "$emulator.exe" -ArgumentList $arguments
+Write-Host "Started $emulator with remote monitor on port ${port}: $prg"

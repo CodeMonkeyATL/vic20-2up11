@@ -1,20 +1,27 @@
 param(
-    [string]$OutFile
+    [string]$OutFile,
+    # vic20 (xvic, the default) or c64 (x64sc); see machine.ps1
+    [string]$Machine = 'vic20'
 )
 
-# asks the running xvic (remote monitor on 127.0.0.1:6510) to save its screen as a PNG
+. (Join-Path $PSScriptRoot 'machine.ps1')
+$m = Get-Machine $Machine
+$emulator = $m.Emulator
+$port = $m.Port
+
+# asks the running emulator (remote monitor on 127.0.0.1, the machine's port) to save its screen as a PNG
 if (-not $OutFile) {
     $root = Split-Path -Parent $PSScriptRoot
     $tempDir = Join-Path $root 'screenshots\temp'
     New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
-    $OutFile = Join-Path $tempDir ("xvic-{0}.png" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $OutFile = Join-Path $tempDir ("$emulator-{0}.png" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
 }
 $OutFile = [System.IO.Path]::GetFullPath($OutFile)
 Remove-Item $OutFile -ErrorAction SilentlyContinue
 
 $client = New-Object System.Net.Sockets.TcpClient
 try {
-    $client.Connect('127.0.0.1', 6510)
+    $client.Connect('127.0.0.1', $port)
     $stream = $client.GetStream()
     $unix = $OutFile -replace '\\', '/'
     # format 2 = PNG; don't send "x" -- exiting the monitor before disconnecting wedges VICE's remote monitor
@@ -39,14 +46,14 @@ try {
         }
     }
 } catch {
-    Write-Host 'Could not reach the xvic remote monitor on 127.0.0.1:6510. Is xvic running?'
+    Write-Host "Could not reach the $emulator remote monitor on 127.0.0.1:$port. Is $emulator running?"
     exit 1
 } finally {
     $client.Close()
 }
 
 if (-not (Test-Path $OutFile)) {
-    Write-Host 'xvic did not write a screenshot.'
+    Write-Host "$emulator did not write a screenshot."
     exit 1
 }
 

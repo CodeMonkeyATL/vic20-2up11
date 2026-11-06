@@ -9,7 +9,7 @@
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200
 340 ifa$="q"andpeek(841)=0thenpoke36878,0:print"{blu}":end
-345 if(a$="l"ora$="q")andpeek(841)then800
+345 if(a$="l"ora$="q")andpeek(841)then790
 400 ifa$="w"thendc=0:dl=1:ds=4:db=1:wa=38585:ws=1:goto450
 410 ifa$="a"thendc=0:dl=4:ds=1:db=2:wa=38606:ws=22:goto450
 420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38695:ws=1:goto450
@@ -22,11 +22,11 @@
 465 wc=2:gosub950:gosub970:mt=dbormt:onsngosub660
 470 ifmt<15then300
 475 gosub6100:tg=1:print"{home}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}{down}"tab(6)"{reverse on}{red}game over!":mt=0:onsngosub670
-476 poke900,1:poke901,254:poke902,4:poke903,3:v=ss
-477 fori=904to906:pokei,v-256*int(v/256):v=int(v/256):next
-478 poke907,te-256*int(te/256):poke908,te/256:ifpeek(841)thenprinttab(5)"{red}l{blu}eaderboard"
-479 v=0:forx=0to15:p=gt%(x):v=v-(p>v)*(p-v):next:poke910,v
-480 goto300
+476 gosub481:goto300
+481 poke900,1:poke901,254:poke902,4:poke903,3:v=ss
+482 fori=904to906:pokei,v-256*int(v/256):v=int(v/256):next
+483 poke907,te-256*int(te/256):poke908,te/256:ifpeek(841)thenprinttab(5)"{red}l{blu}eaderboard"
+484 v=0:forx=0to15:p=gt%(x):v=v-(p>v)*(p-v):next:poke910,v:return
 600 fori=ftoesteps:pokev,i:next:pokev,0:poke36878,15:return
 610 v=36876:fori=1to4:pokev,195+i*12:forj=1to99:next:next:pokev,0:return
 620 ifmnthen640
@@ -37,6 +37,7 @@
 660 poke36877,250:v=36878:f=15:e=0:s=-1:gosub600:poke36877,0:return
 670 v=36874:f=200:e=140:s=-.5:goto600
 
+790 iftg=0andss>0thengosub6100:gosub481
 800 poke36878,0:print"{blu}{clr}{down}{down}load"chr$(34);:fori=1topeek(842):printchr$(peek(842+i));:next
 810 printchr$(34)","peek(841)"{home}";:poke631,13:poke632,82:poke633,85
 820 poke634,78:poke635,13:poke198,5:end

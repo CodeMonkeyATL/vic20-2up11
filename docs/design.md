@@ -302,7 +302,7 @@ The timer shows the minutes and seconds since the game started, as `mm:ss` on ro
 
 2up11 works with the CodeMonkeyATL launcher (`vic20-launcher`), which posts results to the leaderboard. The two talk only through the cassette buffer (828-1019, which a disk `LOAD` leaves alone); 2up11 has no network code. The buffer layout is in `vic20-launcher/docs/design.md`, and the leaderboard's design in the private `meta` repo, `research/leaderboard/README.md`.
 
-**Result at game over (476-479):** the service knows 2up11 as game 1, variant 4 (`4X4`), with three fields: the score, the elapsed seconds, and the biggest tile.
+**Result at game over (476, 481-484):** the service knows 2up11 as game 1, variant 4 (`4X4`), with three fields: the score, the elapsed seconds, and the biggest tile.
 
 | Address | Value |
 |---|---|
@@ -312,9 +312,13 @@ The timer shows the minutes and seconds since the game started, as `mm:ss` on ro
 | 907-908 | `te`, 2 bytes (at most 5999) |
 | 910 | the biggest tile's power, 1 byte (11 = 2048); the service shows it as the tile, `MAX 2048` |
 
-The launcher zeroes 900-918 after reading, and power-on clears it, so 909, 911-912 and the optional `TI` at 916-918 are left at 0. 479 finds the biggest tile by scanning `gt%()` at game over: tiles never shrink, so the biggest on the final board is the biggest made in the game. It keeps the maximum without an `if` (`v=v-(p>v)*(p-v)`), because a false `if` would skip the `next` on the same line. It reuses `v`, `x` and `p`, so it adds no variables. The score gets all 3 bytes through a loop (`v-256*int(v/256)`), since a good game passes 32767 (the cheap `255ands` form stops there) and could pass 65535. A second game over before the launcher runs replaces the first result; so does the same game over printed again (it can repeat if the player keeps pressing moves).
+The launcher zeroes 900-918 after reading, and power-on clears it, so 909, 911-912 and the optional `TI` at 916-918 are left at 0. 484 finds the biggest tile by scanning `gt%()` at game over: tiles never shrink, so the biggest on the final board is the biggest made in the game. It keeps the maximum without an `if` (`v=v-(p>v)*(p-v)`), because a false `if` would skip the `next` on the same line. It reuses `v`, `x` and `p`, so it adds no variables. The score gets all 3 bytes through a loop (`v-256*int(v/256)`), since a good game passes 32767 (the cheap `255ands` form stops there) and could pass 65535. A second game over before the launcher runs replaces the first result; so does the same game over printed again (it can repeat if the player keeps pressing moves). 481-484 are a subroutine (476 calls it, then back to 300) so that leaving mid-game can use it too (below).
 
-**`l` loads the launcher (345, 800-820):** offered only when 841 isn't 0, so 2up11 started on its own plays exactly as before (`l` is ignored). It works at any time, not just at game over; mid-game it abandons the game without a result. **`q` too (2026-11-05):** a game started from the launcher goes back to it on quit, so 340 quits only when 841 is 0, and 345 sends both `l` and `q` to 800 otherwise (`(a$="l"ora$="q")andpeek(841)`). Started on its own, `q` quits as before. 800 turns the sound off and prints `load"<name>",<device>` on row 2, with the name from 843+ (length at 842) and the device from 841 (`print` adds spaces around the number, which `load` ignores), then `{home}`; 810-820 put Return, `r`, `u`, `n`, Return in the keyboard buffer and `end`. Details of the trick in `vic20-launcher/docs/design.md`, "Starting another program".
+**`l` loads the launcher (345, 800-820):** offered only when 841 isn't 0, so 2up11 started on its own plays exactly as before (`l` is ignored). It works at any time, not just at game over; mid-game it abandons the game without a result. **`q` too (2026-11-05):** a game started from the launcher goes back to it on quit, so 340 quits only when 841 is 0, and 345 sends both `l` and `q` to 800 otherwise (`(a$="l"ora$="q")andpeek(841)`). Started on its own, `q` quits as before.
+
+**Leaving mid-game posts the score so far (790, 2026-11-05):** 2up11 is a "how far can you go" game, so a quit is a fair end (the per-game policy is in `meta/research/leaderboard/README.md`). 345 goes to 790, which, if the game isn't over (`tg=0`) and has scored (`ss>0`), updates the timer (6100, which sets `te`) and writes the result (481), then falls into 800. A finished game already left its result, so it isn't written twice, and a quit before the first merge posts nothing, rather than a 0. `ss>0` is a comparison, not a bare `ss`, because `and` takes only -32768 to 32767 and a score can pass that. Tested in xvic: launcher → 2up11 → a few moves → `q` showed `/v1/s?g=1&v=4&p=1&a=60&b=37&c=4`; `q` right after starting showed no upload; a forced game over (board set from the prompt) still left `01 FE 04 03 04 00 00 29 00 00 0A`.
+
+800 turns the sound off and prints `load"<name>",<device>` on row 2, with the name from 843+ (length at 842) and the device from 841 (`print` adds spaces around the number, which `load` ignores), then `{home}`; 810-820 put Return, `r`, `u`, `n`, Return in the keyboard buffer and `end`. Details of the trick in `vic20-launcher/docs/design.md`, "Starting another program".
 
 **Tested in xvic (2026-11-04),** with drive 8 as the shared `prgs-latest` folder: launcher → `1` → 2up11 → random moves to game over (score 2004, 39:35) → the buffer held `01 FE 04 02 D4 07 00 47 09` → `l` → the launcher showed `/v1/s?g=1&v=4&p=1&a=2004&b=2375` and zeroed the area. `l` mid-game returns to the launcher with nothing to post. Autostarted alone, `l` is ignored and no `LEADERBOARD` appears. **Biggest tile (2026-11-05):** a full board with no merges and a 1024 (power 10), set from the prompt, ended in game over with `01 FE 04 03`, the score and time, and `0A` at 910.
 
@@ -383,12 +387,14 @@ Keep the timing on the same line as the work: timing across lines also counts th
 |---|---|
 | 100–120 | init: hot variables first, dims, seed, volume 15, the `sa%` and `cd%` tables |
 | 200 | new game: clear the grid and score, start the timer, full draw, first tile, then empty the keyboard buffer (`poke198,0`) so keys pressed while the game loads or draws aren't taken as moves |
-| 300–480 | main loop: key wait (with the timer), dispatch, move, wall colors, sound, game over; 476–478 leave the result for the launcher |
+| 300–476 | main loop: key wait (with the timer), dispatch, move, wall colors, sound, game over; 476 leaves the result for the launcher (481) |
+| 481–484 | the result for the launcher: game, variant, field count, score, seconds, biggest tile |
 | 600 | sound sweep: register `v` from `f` to `e` by `s`, then off and volume back to 15 |
 | 610 | 2048 chime (4 rising notes) |
 | 620–650 | move sound: the quiet slide, or one coin ding per merge (with the chime after a 2048 or bigger) |
 | 660 | no-move woosh (noise, volume fade) |
 | 670 | game over tone |
+| 790 | leaving mid-game: the result so far, if the game has scored |
 | 800–820 | load the launcher from the location in the cassette buffer (841–899) |
 | 900 | draw one tile: cell `x`, power `p`, color `sc` |
 | 950 | color one inner wall: `wa`, `ws`, color `wc` |
@@ -425,12 +431,12 @@ Keep the timing on the same line as the work: timing across lines also counts th
 | `j`, `lv`, `lm` | one-pass merge: next free position, last tile that can still merge (0 = none), line changed |
 | `mz%(7)`, `mn` | the move's merges: new power of each, and how many (0–8); the dings play from them |
 | `k`, `n` | ding loop: merge index, first note's pitch |
-| `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step; `v` also holds the score being split into bytes (477) and the biggest tile's power (479) |
+| `v`, `f`, `e`, `s` | sound sweep (600): register, from, end, step; `v` also holds the score being split into bytes (482) and the biggest tile's power (484) |
 | `sn` | sound: 1 on, 0 muted (`m` toggles it) |
 | `r` | line number in 1000; also the seed dummy at startup |
 | `c` | first cell of the current line; also the screen code of a queued key in 970, and the tens in 6000 |
 | `o` | key queue: first cell for the waiting keys (1 while a key is active, else 0) |
-| `i` | loop counter; also the address in 477 |
+| `i` | loop counter; also the address in 482 |
 | `x` | cell index (move routine, drawing, spawning, new game loop); also takes `fre(0)` |
 | `p` | a tile's power |
 | `sc` | tile color |
@@ -460,6 +466,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | result for the launcher at game over, `l` loads the launcher | 2991 | 160 |
 | biggest tile as a third result field | 3041 | 124 |
 | `q` returns to the launcher when one started the game | 3059 | 92 |
+| leaving mid-game posts the score so far | 3092 | 59 |
 
 The first tightening pass:
 

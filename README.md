@@ -44,7 +44,7 @@ The game shows GAME OVER! under the board once the board is full and you've trie
 | `n` | new game |
 | `r` | redraw the screen |
 | `m` | sound off or on (stays off for new games until pressed again) |
-| `q` | quit |
+| `q` | quit; started from the CodeMonkeyATL launcher, back to the launcher |
 | `l` | back to the CodeMonkeyATL launcher, which posts your score to the leaderboard (only when 2up11 was started from the launcher; shown as `LEADERBOARD` at game over) |
 
 **Score:** each merge adds the value of the new tile (two 4s make an 8 and score 8), as in 2048. The score shows near the top of the screen. 

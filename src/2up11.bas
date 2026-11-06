@@ -8,8 +8,8 @@
 310 x=fre(0):ifa$="r"thenmt=0:gosub5000:goto300
 320 ifa$="%"thenfori=0to15:printi;",";gt%(i):next:goto300
 330 ifa$="n"then200
-340 ifa$="q"thenpoke36878,0:print"{blu}":end
-345 ifa$="l"andpeek(841)then800
+340 ifa$="q"andpeek(841)=0thenpoke36878,0:print"{blu}":end
+345 if(a$="l"ora$="q")andpeek(841)then800
 400 ifa$="w"thendc=0:dl=1:ds=4:db=1:wa=38585:ws=1:goto450
 410 ifa$="a"thendc=0:dl=4:ds=1:db=2:wa=38606:ws=22:goto450
 420 ifa$="s"thendc=12:dl=1:ds=-4:db=4:wa=38695:ws=1:goto450

@@ -260,8 +260,8 @@ So the leftmost green key is always the move in progress, and it only disappears
 - redraw: r  
 - debug dump: % (prints each cell's index and power)  
 - new game: n  
-- quit: q  
-- launcher: l (345), only if a launcher left its location in the cassette buffer (`peek(841)`); loads it (800, see "launcher")  
+- quit: q (340), only when no launcher started the game (`peek(841)=0`); otherwise `q` does what `l` does  
+- launcher: l (345), and q, only if a launcher left its location in the cassette buffer (`peek(841)`); loads it (800, see "launcher")  
 - mute: m (425, after w, a and s, since moves are more common): toggles `sn` between 1 and 0 and takes the key off the queue (970)  
 - movement keys: w, a, s, d (400–440 set the direction and its wall, 450 colors the wall blue, shows the key queue (965), turns the tiles black (1100) and runs the move, which draws the lines that changed)
 
@@ -314,7 +314,7 @@ The timer shows the minutes and seconds since the game started, as `mm:ss` on ro
 
 The launcher zeroes 900-918 after reading, and power-on clears it, so 909, 911-912 and the optional `TI` at 916-918 are left at 0. 479 finds the biggest tile by scanning `gt%()` at game over: tiles never shrink, so the biggest on the final board is the biggest made in the game. It keeps the maximum without an `if` (`v=v-(p>v)*(p-v)`), because a false `if` would skip the `next` on the same line. It reuses `v`, `x` and `p`, so it adds no variables. The score gets all 3 bytes through a loop (`v-256*int(v/256)`), since a good game passes 32767 (the cheap `255ands` form stops there) and could pass 65535. A second game over before the launcher runs replaces the first result; so does the same game over printed again (it can repeat if the player keeps pressing moves).
 
-**`l` loads the launcher (345, 800-820):** offered only when 841 isn't 0, so 2up11 started on its own plays exactly as before (`l` is ignored). It works at any time, not just at game over; mid-game it abandons the game without a result, like `q`. 800 turns the sound off and prints `load"<name>",<device>` on row 2, with the name from 843+ (length at 842) and the device from 841 (`print` adds spaces around the number, which `load` ignores), then `{home}`; 810-820 put Return, `r`, `u`, `n`, Return in the keyboard buffer and `end`. Details of the trick in `vic20-launcher/docs/design.md`, "Starting another program".
+**`l` loads the launcher (345, 800-820):** offered only when 841 isn't 0, so 2up11 started on its own plays exactly as before (`l` is ignored). It works at any time, not just at game over; mid-game it abandons the game without a result. **`q` too (2026-11-05):** a game started from the launcher goes back to it on quit, so 340 quits only when 841 is 0, and 345 sends both `l` and `q` to 800 otherwise (`(a$="l"ora$="q")andpeek(841)`). Started on its own, `q` quits as before. 800 turns the sound off and prints `load"<name>",<device>` on row 2, with the name from 843+ (length at 842) and the device from 841 (`print` adds spaces around the number, which `load` ignores), then `{home}`; 810-820 put Return, `r`, `u`, `n`, Return in the keyboard buffer and `end`. Details of the trick in `vic20-launcher/docs/design.md`, "Starting another program".
 
 **Tested in xvic (2026-11-04),** with drive 8 as the shared `prgs-latest` folder: launcher → `1` → 2up11 → random moves to game over (score 2004, 39:35) → the buffer held `01 FE 04 02 D4 07 00 47 09` → `l` → the launcher showed `/v1/s?g=1&v=4&p=1&a=2004&b=2375` and zeroed the area. `l` mid-game returns to the launcher with nothing to post. Autostarted alone, `l` is ignored and no `LEADERBOARD` appears. **Biggest tile (2026-11-05):** a full board with no merges and a 1024 (power 10), set from the prompt, ended in game over with `01 FE 04 03`, the score and time, and `0A` at 910.
 
@@ -459,6 +459,7 @@ Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for 
 | keyboard flush at new game, mute toggle (`m`), `mute` all red while muted, timer ticks with keys queued | 2681 | 470 |
 | result for the launcher at game over, `l` loads the launcher | 2991 | 160 |
 | biggest tile as a third result field | 3041 | 124 |
+| `q` returns to the launcher when one started the game | 3059 | 92 |
 
 The first tightening pass:
 

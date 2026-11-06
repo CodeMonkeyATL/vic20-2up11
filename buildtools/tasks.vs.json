@@ -2,7 +2,7 @@
   "version": "0.2.1",
   "tasks": [
     {
-      "taskLabel": "Build and run in xvic",
+      "taskLabel": "Build and run in VICE",
       "appliesTo": "*.bas",
       "type": "default",
       "contextType": "build",

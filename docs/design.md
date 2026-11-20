@@ -451,22 +451,24 @@ Keep the timing on the same line as the work: timing across lines also counts th
 
 Measured with `?fre(0)` after quitting, on an unexpanded VIC-20 (3583 bytes for program and variables).
 
-| version | PRG bytes | free |
-|---|---|---|
-| `v0.9` (untightened) | 3156 | 27 |
-| first tightening pass | 1200 | 2209 |
-| double border | 1239 | 2170 |
-| wall colors | 1434 | 1954 |
-| key queue (active key in green), GAME OVER on the score row | 1581 | 1800 |
-| direction variables renamed (`dc`, `dl`, `ds`, `db`, `mv`) | 1602 | 1779 |
-| sound effects | 2010 | 1299 |
-| speed pass | 2299 | 887 |
-| screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
-| keyboard flush at new game, mute toggle (`m`), `mute` all red while muted, timer ticks with keys queued | 2681 | 470 |
-| result for the launcher at game over, `l` loads the launcher | 2991 | 160 |
-| biggest tile as a third result field | 3041 | 124 |
-| `q` returns to the launcher when one started the game | 3059 | 92 |
-| leaving mid-game posts the score so far | 3092 | 59 |
+| date | version | PRG bytes | free |
+|---|---|---|---|
+| 2026-10-25 | `v0.9` (untightened) | 3156 | 27 |
+| 2026-10-25 | first tightening pass | 1200 | 2209 |
+| 2026-10-25 | double border | 1239 | 2170 |
+| 2026-10-25 | wall colors | 1434 | 1954 |
+| 2026-10-25 | key queue (active key in green), GAME OVER on the score row | 1581 | 1800 |
+| 2026-10-25 | direction variables renamed (`dc`, `dl`, `ds`, `db`, `mv`) | 1602 | 1779 |
+| 2026-10-25 | sound effects | 2010 | 1299 |
+| 2026-10-26 | speed pass | 2299 | 887 |
+| 2026-10-26 | screen layout (score and time rows, help at the bottom), game timer | 2590 | 582 |
+| 2026-10-27 | keyboard flush at new game, mute toggle (`m`), `mute` all red while muted, timer ticks with keys queued | 2681 | 470 |
+| 2026-11-04 | result for the launcher at game over, `l` loads the launcher | 2991 | 160 |
+| 2026-11-05 | biggest tile as a third result field | 3041 | 124 |
+| 2026-11-05 | `q` returns to the launcher when one started the game | 3059 | 92 |
+| 2026-11-05 | leaving mid-game posts the score so far | 3092 | 59 |
+
+The dates come from the commits that added each row (found with `git log -S`, 2026-11-19).
 
 The first tightening pass:
 
